@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\Trabalho Pratico\\Gestao Eventos\\ES2\\ES2.csproj": {}
+    "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\TrabalhoPratico\\GestaoEventos\\ES2\\ES2.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\Trabalho Pratico\\Gestao Eventos\\ES2\\ES2.csproj": {
+    "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\TrabalhoPratico\\GestaoEventos\\ES2\\ES2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\Trabalho Pratico\\Gestao Eventos\\ES2\\ES2.csproj",
+        "projectUniqueName": "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\TrabalhoPratico\\GestaoEventos\\ES2\\ES2.csproj",
         "projectName": "ES2",
-        "projectPath": "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\Trabalho Pratico\\Gestao Eventos\\ES2\\ES2.csproj",
+        "projectPath": "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\TrabalhoPratico\\GestaoEventos\\ES2\\ES2.csproj",
         "packagesPath": "C:\\Users\\Daniel\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\Trabalho Pratico\\Gestao Eventos\\ES2\\obj\\",
+        "outputPath": "C:\\Users\\Daniel\\Desktop\\Aulas\\2-ANO\\2-Semestre\\ES2\\TrabalhoPratico\\GestaoEventos\\ES2\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Daniel\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -43,6 +43,24 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
