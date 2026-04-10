@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Criar Evento";
+    var categorias = ViewBag.Categorias as IEnumerable<ES2.Models.Categoria> ?? Enumerable.Empty<ES2.Models.Categoria>();
 }
 
 <div class="container mt-5">
@@ -49,10 +50,28 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Local" class="form-label"></label>
-                            <input asp-for="Local" class="form-control" placeholder="Ex: Porto, Centro de Congressos" />
-                            <span asp-validation-for="Local" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label asp-for="Local" class="form-label"></label>
+                                <input asp-for="Local" class="form-control" placeholder="Ex: Porto, Centro de Congressos" />
+                                <span asp-validation-for="Local" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Categoria</label>
+                                <input type="hidden" asp-for="IdCategoria" id="hiddenIdCategoria" />
+                                <select class="form-select" id="selectCategoria">
+                                    <option value="">Sem categoria</option>
+                                    @foreach (var cat in categorias)
+                                    {
+                                        <option value="@cat.IdCategoria">@cat.Nome</option>
+                                    }
+                                    <option value="__nova__">+ Adicionar categoria</option>
+                                </select>
+                                <input asp-for="NovaCategoria" id="inputNovaCategoria" class="form-control mt-2"
+                                       placeholder="Nome da nova categoria" style="display:none" />
+                                <span asp-validation-for="NovaCategoria" class="text-danger"></span>
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -74,4 +93,22 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        const select = document.getElementById('selectCategoria');
+        const input = document.getElementById('inputNovaCategoria');
+        const hidden = document.getElementById('hiddenIdCategoria');
+
+        select.addEventListener('change', function () {
+            if (this.value === '__nova__') {
+                input.style.display = 'block';
+                input.required = true;
+                hidden.value = '';
+            } else {
+                input.style.display = 'none';
+                input.required = false;
+                input.value = '';
+                hidden.value = this.value;
+            }
+        });
+    </script>
 }

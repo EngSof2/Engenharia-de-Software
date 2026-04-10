@@ -83,6 +83,24 @@ label, .form-label {
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
+.form-select {
+  background-color: #2a2a3d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.form-select:focus {
+  background-color: #2a2a3d !important;
+  color: #ffffff !important;
+  border-color: #8c78b0 !important;
+  box-shadow: 0 0 0 0.25rem rgba(140, 120, 176, 0.25) !important;
+}
+
+.form-select option {
+  background-color: #2a2a3d;
+  color: #ffffff;
+}
+
 /* --- PÁGINA DE DETALHES --- */
 .card {
   background-color: transparent !important;
@@ -99,7 +117,7 @@ label, .form-label {
   background-color: transparent !important;
 }
 
-.table tr:nth-child(1) th { color: #ffb3ba !important; }
+.table tr:nth-child(1) th { color: #ffffff !important; }
 .table tr:nth-child(2) th { color: #5f8264 !important; }
 .table tr:nth-child(3) th { color: #bae1ff !important; }
 

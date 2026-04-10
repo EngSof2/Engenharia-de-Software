@@ -18,19 +18,65 @@ public class EventoController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? nome, DateOnly? data, string? local, int? idCategoria)
     {
-        var eventos = await _context.Eventos
+        var query = _context.Eventos.Include(e => e.IdCategoriaNavigation).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(nome))
+            query = query.Where(e => EF.Functions.ILike(e.Nome, $"%{nome}%"));
+
+        if (data.HasValue)
+            query = query.Where(e => e.Data == data.Value);
+
+        if (!string.IsNullOrWhiteSpace(local))
+            query = query.Where(e => e.Local != null && EF.Functions.ILike(e.Local, $"%{local}%"));
+
+        if (idCategoria.HasValue)
+            query = query.Where(e => e.IdCategoria == idCategoria.Value);
+
+        var eventos = await query
             .OrderBy(e => e.Data)
             .ThenBy(e => e.HoraInicio)
             .ToListAsync();
+
+        ViewBag.Categorias = await _context.Categorias.OrderBy(c => c.Nome).ToListAsync();
+        ViewBag.FiltroNome = nome;
+        ViewBag.FiltroData = data?.ToString("yyyy-MM-dd");
+        ViewBag.FiltroLocal = local;
+        ViewBag.FiltroCategoria = idCategoria;
 
         return View(eventos);
     }
 
     [HttpGet]
-    public IActionResult Criar()
+    public async Task<IActionResult> Pesquisar(string? nome, DateOnly? data, string? local, int? idCategoria)
     {
+        var query = _context.Eventos.Include(e => e.IdCategoriaNavigation).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(nome))
+            query = query.Where(e => EF.Functions.ILike(e.Nome, $"%{nome}%"));
+
+        if (data.HasValue)
+            query = query.Where(e => e.Data == data.Value);
+
+        if (!string.IsNullOrWhiteSpace(local))
+            query = query.Where(e => e.Local != null && EF.Functions.ILike(e.Local, $"%{local}%"));
+
+        if (idCategoria.HasValue)
+            query = query.Where(e => e.IdCategoria == idCategoria.Value);
+
+        var eventos = await query
+            .OrderBy(e => e.Data)
+            .ThenBy(e => e.HoraInicio)
+            .ToListAsync();
+
+        return PartialView("_TabelaEventos", eventos);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Criar()
+    {
+        ViewBag.Categorias = await _context.Categorias.OrderBy(c => c.Nome).ToListAsync();
         return View(new CriarEventoDto());
     }
 
@@ -40,7 +86,27 @@ public class EventoController : Controller
     {
         if (!ModelState.IsValid)
         {
+            ViewBag.Categorias = await _context.Categorias.OrderBy(c => c.Nome).ToListAsync();
             return View(dto);
+        }
+
+        // Se o utilizador quer criar uma nova categoria
+        if (!string.IsNullOrWhiteSpace(dto.NovaCategoria))
+        {
+            var categoriaExistente = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.Nome.ToLower() == dto.NovaCategoria.Trim().ToLower());
+
+            if (categoriaExistente != null)
+            {
+                dto.IdCategoria = categoriaExistente.IdCategoria;
+            }
+            else
+            {
+                var novaCategoria = new Categoria { Nome = dto.NovaCategoria.Trim() };
+                _context.Categorias.Add(novaCategoria);
+                await _context.SaveChangesAsync();
+                dto.IdCategoria = novaCategoria.IdCategoria;
+            }
         }
 
         var evento = new Evento
@@ -50,7 +116,8 @@ public class EventoController : Controller
             HoraInicio = dto.HoraInicio,
             Local = dto.Local,
             Descricao = dto.Descricao,
-            CapMax = dto.Capacidade
+            CapMax = dto.Capacidade,
+            IdCategoria = dto.IdCategoria
         };
 
         await using var transaction = await _context.Database.BeginTransactionAsync();

@@ -31,4 +31,9 @@ public class CriarEventoDto
     [Required(ErrorMessage = "O preço é obrigatório.")]
     [Range(0, 999999.99, ErrorMessage = "O preço deve ser igual ou superior a 0.")]
     public decimal? Preco { get; set; }
+
+    public int? IdCategoria { get; set; }
+
+    [StringLength(100, ErrorMessage = "O nome da categoria não pode ter mais de 100 caracteres.")]
+    public string? NovaCategoria { get; set; }
 }
