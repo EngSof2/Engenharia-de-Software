@@ -1,0 +1,149 @@
+@model IEnumerable<ES2.Models.Atividade>
+
+@{
+    ViewData["Title"] = "Atividades";
+    var categorias = ViewBag.Categorias as IEnumerable<ES2.Models.Categoria> ?? Enumerable.Empty<ES2.Models.Categoria>();
+    var eventos = ViewBag.Eventos as IEnumerable<ES2.Models.Evento> ?? Enumerable.Empty<ES2.Models.Evento>();
+
+}
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+    <div>
+        <h2 class="mb-1">Atividades</h2>
+        <p class="text-light mb-0">Lista das atividades já criados no sistema.</p>
+    </div>  
+</div>
+
+
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index" id="formPesquisa" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Evento</label>
+                <select name="idEvento" id="filtroEvento" class="form-select">
+                    <option value="">Todas</option>
+                    @foreach (var cat in eventos)
+                    {
+                        <option value="@cat.IdEvento" selected="@(ViewBag.FiltroEvento != null && (int)ViewBag.FiltroEvento == cat.IdEvento)">@cat.Nome</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Nome</label>
+                <input type="text" name="nome" id="filtroNome" class="form-control" placeholder="Pesquisar por nome..." value="@ViewBag.FiltroNome" autocomplete="off"/>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Local</label>
+                <input type="text" name="local" id="filtroLocal" class="form-control" placeholder="Pesquisar por local..." value="@ViewBag.FiltroLocal" autocomplete="off"/>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Capacidade</label>
+                <input type="integer" name="capacidade" id="filtroCapacidade" class="form-control" placeholder="Pesquisar por Capacidade..." value="@ViewBag.FiltroCapacidade" autocomplete="off"/>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Categoria</label>
+                <select name="idCategoria" id="filtroCategoria" class="form-select">
+                    <option value="">Todas</option>
+                    @foreach (var cat in categorias)
+                    {
+                        <option value="@cat.IdCategoria" selected="@(ViewBag.FiltroCategoria != null && (int)ViewBag.FiltroCategoria == cat.IdCategoria)">@cat.Nome</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">Pesquisar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Evento</th>
+                    <th>Local</th>
+                    <th>Categoria</th>
+                    <th>Capacidade</th>
+                </tr>
+                </thead>
+                <tbody id="tabelaEventos">
+                @if (Model.Any())
+                {
+                    @foreach (var atividade in Model)
+                    {
+                        <tr>
+                            <td class="align-middle">@atividade.Nome</td>
+                            <td class="align-middle">@(atividade.IdEventoNavigation?.Nome ?? "-")</td>
+                            <td class="align-middle">@(string.IsNullOrWhiteSpace(atividade.Local) ? "-" : atividade.Local)</td>
+        
+                            <td class="align-middle">@(atividade.IdCategoriaNavigation?.Nome ?? "-")</td> 
+        
+                            <td class="align-middle">@(atividade.Capacidade.ToString() ?? "-")</td> 
+        
+                            <td class="text-end">
+                                <a asp-action="Editar" asp-route-id="@atividade.IdAtividade" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </a>
+                                <a asp-action="ConfirmarRemocao" asp-route-id="@atividade.IdAtividade" class="btn btn-sm btn-danger ms-1">
+                                    <i class="bi bi-trash"></i> Remover
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4">Nenhuma Atividade encontrada.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const tbody = document.getElementById('tabelaAtividades');
+        const inputs = ['filtroNome', 'filtroLocal', 'filtroCapacidade'];
+        const selects = ['filtroCategoria', 'filtroEvento'];
+        let debounce;
+
+        function pesquisar() {
+            const params = new URLSearchParams({
+                nome: document.getElementById('filtroNome').value,
+                capacidade: document.getElementById('filtroCapacidade').value, 
+                local: document.getElementById('filtroLocal').value,
+                idCategoria: document.getElementById('filtroCategoria').value,
+                idEvento: document.getElementById('filtroEvento').value 
+            });
+
+            fetch('@Url.Action("Pesquisar", "Atividade")?' + params)
+                .then(r => r.text())
+                .then(html => tbody.innerHTML = html);
+        }
+
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                clearTimeout(debounce);
+                debounce = setTimeout(pesquisar, 300);
+            });
+        });
+
+        selects.forEach(id => {
+            document.getElementById(id).addEventListener('change', pesquisar);
+        });
+    </script>
+}

@@ -27,6 +27,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUtilizadorRepository, UtilizadorRepository>();
 builder.Services.AddScoped<IAtividadeRepository, AtividadeRepository>();
 builder.Services.AddScoped<IEventoRepository, EventoRepository>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>(); 
+builder.Services.AddScoped<IEventoRepository, EventoRepository>();
+builder.Services.AddScoped<IBilhetesEventoRepository, BilhetesEventoRepository>();
+builder.Services.AddScoped<ITipoBilheteRepository, TipoBilheteRepository>();
 
 
 var app = builder.Build();

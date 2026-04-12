@@ -7,23 +7,23 @@ namespace ES2.Controllers;
 public class AtividadeController : Controller
 {
     private readonly IAtividadeRepository _atividadeRepository;
-
-    // O repositório é injetado automaticamente pelo .NET
-    public AtividadeController(IAtividadeRepository atividadeRepository)
+    private readonly IEventoRepository _eventoRepository;
+    private readonly ICategoriaRepository _categoriaRepository;
+    
+    public AtividadeController(IAtividadeRepository atividadeRepository,IEventoRepository eventoRepository, ICategoriaRepository categoriaRepository)
     {
         _atividadeRepository = atividadeRepository;
+        _eventoRepository = eventoRepository;         
+        _categoriaRepository = categoriaRepository;
     }
-
-    // GET: /Atividade/Editar/5
-    // Abre o formulário de edição já preenchido com os dados atuais
+    
     public async Task<IActionResult> Editar(int id)
     {
         var atividade = await _atividadeRepository.GetByIdAsync(id);
 
         if (atividade == null)
             return NotFound();
-
-        // Preenche o DTO com os dados atuais para mostrar no formulário
+        
         var dto = new EditarAtividadeDto
         {
             Nome = atividade.Nome,
@@ -31,13 +31,69 @@ public class AtividadeController : Controller
             Capacidade = atividade.Capacidade,
             IdCategoria = atividade.IdCategoria
         };
-
-        // Guarda o ID e o ID do evento na ViewBag para usar na View
+        
         ViewBag.AtividadeId = id;
         ViewBag.EventoId = atividade.IdEvento;
 
         return View(dto);
     }
+    
+    public async Task<IActionResult> Index(string? nome, string? local, int? capacidade, int? idCategoria, int? idEvento)
+    {
+        // 1. Carregamos a lista base
+        var atividades = await _atividadeRepository.GetAllAsync();
+        
+        if (!string.IsNullOrEmpty(nome))
+            atividades = atividades.Where(a => a.Nome.Contains(nome, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrEmpty(local))
+            atividades = atividades.Where(a => a.Local != null && a.Local.Contains(local, StringComparison.OrdinalIgnoreCase));
+
+        if (capacidade.HasValue)
+            atividades = atividades.Where(a => a.Capacidade >= capacidade.Value);
+
+        if (idCategoria.HasValue)
+            atividades = atividades.Where(a => a.IdCategoria == idCategoria.Value);
+
+        if (idEvento.HasValue)
+            atividades = atividades.Where(a => a.IdEvento == idEvento.Value);
+        
+        ViewBag.Categorias = await _categoriaRepository.GetAllAsync();
+        ViewBag.Eventos = await _eventoRepository.GetAllAsync();
+        
+        ViewBag.FiltroNome = nome;
+        ViewBag.FiltroLocal = local;
+        ViewBag.FiltroCapacidade = capacidade;
+        ViewBag.FiltroCategoria = idCategoria;
+        ViewBag.FiltroEvento = idEvento;
+
+        return View(atividades);
+    }
+
+
+public async Task<IActionResult> Pesquisar(string nome, string local, int? capacidade, int? idCategoria, int? idEvento)
+{
+    var atividades = await _atividadeRepository.GetAllAsync();
+
+    // Aplicar a mesma lógica de filtro que o Index
+    if (!string.IsNullOrEmpty(nome))
+        atividades = atividades.Where(a => a.Nome.Contains(nome, StringComparison.OrdinalIgnoreCase));
+    
+    if (!string.IsNullOrEmpty(local))
+        atividades = atividades.Where(a => a.Local != null && a.Local.Contains(local, StringComparison.OrdinalIgnoreCase));
+
+    if (capacidade.HasValue)
+        atividades = atividades.Where(a => a.Capacidade >= capacidade.Value);
+
+    if (idCategoria.HasValue)
+        atividades = atividades.Where(a => a.IdCategoria == idCategoria.Value);
+    
+    if (idEvento.HasValue)
+        atividades = atividades.Where(a => a.IdEvento == idEvento.Value);
+    
+    return PartialView("_TabelaEventos", atividades);
+}
+
 
     // POST: /Atividade/Editar/5
     // Recebe os dados do formulário e guarda na base de dados

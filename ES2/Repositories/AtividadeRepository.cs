@@ -12,7 +12,10 @@ public class AtividadeRepository : IAtividadeRepository
     public AtividadeRepository(AppDbContext context) => _context = context;
 
     public async Task<IEnumerable<Atividade>> GetAllAsync() =>
-        await _context.Atividades.ToListAsync();
+        await _context.Atividades
+            .Include(a => a.IdEventoNavigation)
+            .Include(a => a.IdCategoriaNavigation)
+            .ToListAsync();
 
     public async Task<Atividade?> GetByIdAsync(int id) =>
         await _context.Atividades.FindAsync(id);
@@ -38,6 +41,8 @@ public class AtividadeRepository : IAtividadeRepository
             await _context.SaveChangesAsync();
         }
     }
+    
+    
 
     public async Task<IEnumerable<Atividade>> GetByEventoAsync(int eventoId) =>
         await _context.Atividades
@@ -49,4 +54,6 @@ public class AtividadeRepository : IAtividadeRepository
             .Where(r => r.IdAtividade == atividadeId && !r.IsCancelado)
             .Select(r => r.IdUtiNavigation)
             .ToListAsync();
+    
+    
 }
