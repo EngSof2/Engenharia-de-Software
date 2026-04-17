@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/var/home/Kanossa/RiderProjects/Engenharia-de-Software/ES2/ES2.csproj": {}
+    "C:\\Users\\hugom\\RiderProjects\\Engenharia-de-Software\\ES2\\ES2.csproj": {}
   },
   "projects": {
-    "/var/home/Kanossa/RiderProjects/Engenharia-de-Software/ES2/ES2.csproj": {
+    "C:\\Users\\hugom\\RiderProjects\\Engenharia-de-Software\\ES2\\ES2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/var/home/Kanossa/RiderProjects/Engenharia-de-Software/ES2/ES2.csproj",
+        "projectUniqueName": "C:\\Users\\hugom\\RiderProjects\\Engenharia-de-Software\\ES2\\ES2.csproj",
         "projectName": "ES2",
-        "projectPath": "/var/home/Kanossa/RiderProjects/Engenharia-de-Software/ES2/ES2.csproj",
-        "packagesPath": "/home/Kanossa/.nuget/packages/",
-        "outputPath": "/var/home/Kanossa/RiderProjects/Engenharia-de-Software/ES2/obj/",
+        "projectPath": "C:\\Users\\hugom\\RiderProjects\\Engenharia-de-Software\\ES2\\ES2.csproj",
+        "packagesPath": "C:\\Users\\hugom\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\hugom\\RiderProjects\\Engenharia-de-Software\\ES2\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/Kanossa/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\hugom\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
@@ -80,7 +80,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/var/home/Kanossa/.dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

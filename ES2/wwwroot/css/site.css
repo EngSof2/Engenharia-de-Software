@@ -102,13 +102,29 @@ label, .form-label {
 
 /* --- PÁGINA DE DETALHES --- */
 .card {
-  background-color: transparent !important;
+  background-color: #2a2a3d !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
 }
 
 .card-header {
   background-color: rgba(255, 255, 255, 0.05) !important;
   color: #ffffff !important;
+}
+
+.card-body,
+.card-title,
+.card-text,
+.card dt,
+.card dd,
+.card p,
+.card span:not(.badge),
+.card a:not(.btn) {
+  color: #ffffff !important;
+}
+
+.card .text-muted {
+  color: rgba(255, 255, 255, 0.72) !important;
 }
 
 .table, .table th, .table td {

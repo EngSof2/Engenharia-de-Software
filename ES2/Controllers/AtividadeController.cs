@@ -71,7 +71,7 @@ public class AtividadeController : Controller
     }
 
 
-public async Task<IActionResult> Pesquisar(string nome, string local, int? capacidade, int? idCategoria, int? idEvento)
+public async Task<IActionResult> Pesquisar(string? nome, string? local, int? capacidade, int? idCategoria, int? idEvento)
 {
     var atividades = await _atividadeRepository.GetAllAsync();
 
@@ -91,7 +91,7 @@ public async Task<IActionResult> Pesquisar(string nome, string local, int? capac
     if (idEvento.HasValue)
         atividades = atividades.Where(a => a.IdEvento == idEvento.Value);
     
-    return PartialView("_TabelaEventos", atividades);
+    return PartialView("_ResultadosAtividades", atividades);
 }
 
 

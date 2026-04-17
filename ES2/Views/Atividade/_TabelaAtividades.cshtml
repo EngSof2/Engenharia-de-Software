@@ -10,6 +10,14 @@
             <td>@(string.IsNullOrWhiteSpace(atividade.Local) ? "-" : atividade.Local)</td>
             <td>@(atividade.IdCategoriaNavigation?.Nome ?? "-")</td>
             <td>@(atividade.Capacidade.ToString() ?? "-")</td>
+            <td class="text-end">
+                <a asp-action="Editar" asp-route-id="@atividade.IdAtividade" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+                <a asp-action="ConfirmarRemocao" asp-route-id="@atividade.IdAtividade" class="btn btn-sm btn-danger ms-1">
+                    <i class="bi bi-trash"></i> Remover
+                </a>
+            </td>
         </tr>
     }
 }

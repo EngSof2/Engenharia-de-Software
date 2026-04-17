@@ -70,7 +70,7 @@ public class EventoController : Controller
             .ThenBy(e => e.HoraInicio)
             .ToListAsync();
 
-        return PartialView("_TabelaEventos", eventos);
+        return PartialView("_ResultadosEventos", eventos);
     }
 
     [HttpGet]

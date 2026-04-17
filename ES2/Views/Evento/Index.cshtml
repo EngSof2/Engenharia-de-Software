@@ -16,6 +16,17 @@
     </div>
 </div>
 
+<div class="d-flex justify-content-start mb-3">
+    <div class="btn-group btn-group-sm view-toggle" role="group" aria-label="Alternar visualizacao de eventos">
+        <button type="button" class="btn btn-outline-light active" data-view-mode="tabela" title="Vista em lista">
+            <i class="bi bi-list-ul"></i>
+        </button>
+        <button type="button" class="btn btn-outline-light" data-view-mode="catalogo" title="Vista em catalogo">
+            <i class="bi bi-grid-3x3-gap"></i>
+        </button>
+    </div>
+</div>
+
 @if (TempData["Sucesso"] != null)
 {
     <div class="alert alert-success">@TempData["Sucesso"]</div>
@@ -54,36 +65,43 @@
     </div>
 </div>
 
-<div class="card shadow">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Data</th>
-                    <th>Hora</th>
-                    <th>Local</th>
-                    <th>Categoria</th>
-                    <th>Capacidade</th>
-                </tr>
-                </thead>
-                <tbody id="tabelaEventos">
-                <partial name="_TabelaEventos" model="Model" />
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div id="resultadoEventos">
+    <partial name="_ResultadosEventos" model="Model" />
 </div>
 
 @section Scripts {
     <script>
-        const tbody = document.getElementById('tabelaEventos');
+        const resultadoEventos = document.getElementById('resultadoEventos');
         const btnEditarEvento = document.getElementById('btnEditarEvento');
+        const botoesVista = document.querySelectorAll('.view-toggle [data-view-mode]');
         const inputs = ['filtroNome', 'filtroLocal'];
         const selects = ['filtroData', 'filtroCategoria'];
+        const storageKey = 'eventos-view-mode';
         let debounce;
         let eventoSelecionadoId = null;
+
+        function obterModoAtual() {
+            return sessionStorage.getItem(storageKey) || 'tabela';
+        }
+
+        function atualizarBotoesVista(modo) {
+            botoesVista.forEach(botao => {
+                botao.classList.toggle('active', botao.dataset.viewMode === modo);
+            });
+        }
+
+        function aplicarModoVisualizacao() {
+            const modo = obterModoAtual();
+            const tabela = document.getElementById('vistaTabelaEventos');
+            const catalogo = document.getElementById('vistaCatalogoEventos');
+
+            if (tabela && catalogo) {
+                tabela.classList.toggle('d-none', modo !== 'tabela');
+                catalogo.classList.toggle('d-none', modo !== 'catalogo');
+            }
+
+            atualizarBotoesVista(modo);
+        }
 
         function atualizarBotaoEdicao() {
             if (eventoSelecionadoId) {
@@ -98,32 +116,32 @@
             btnEditarEvento.removeAttribute('href');
         }
 
-        function selecionarLinha(row) {
-            tbody.querySelectorAll('tr[data-evento-id]').forEach(tr => tr.classList.remove('evento-selecionado'));
+        function selecionarItem(item) {
+            resultadoEventos.querySelectorAll('[data-evento-id]').forEach(elemento => elemento.classList.remove('evento-selecionado'));
 
-            if (!row) {
+            if (!item) {
                 eventoSelecionadoId = null;
                 atualizarBotaoEdicao();
                 return;
             }
 
-            row.classList.add('evento-selecionado');
-            eventoSelecionadoId = row.dataset.eventoId;
+            item.classList.add('evento-selecionado');
+            eventoSelecionadoId = item.dataset.eventoId;
             atualizarBotaoEdicao();
         }
 
-        tbody.addEventListener('click', event => {
-            const row = event.target.closest('tr[data-evento-id]');
-            if (!row) {
+        resultadoEventos.addEventListener('click', event => {
+            const item = event.target.closest('[data-evento-id]');
+            if (!item) {
                 return;
             }
 
-            if (eventoSelecionadoId === row.dataset.eventoId) {
-                selecionarLinha(null);
+            if (eventoSelecionadoId === item.dataset.eventoId) {
+                selecionarItem(null);
                 return;
             }
 
-            selecionarLinha(row);
+            selecionarItem(item);
         });
 
         document.addEventListener('click', event => {
@@ -131,11 +149,11 @@
                 return;
             }
 
-            if (event.target.closest('#tabelaEventos') || event.target.closest('#btnEditarEvento')) {
+            if (event.target.closest('#resultadoEventos') || event.target.closest('#btnEditarEvento')) {
                 return;
             }
 
-            selecionarLinha(null);
+            selecionarItem(null);
         });
 
         function pesquisar() {
@@ -149,15 +167,16 @@
             fetch('@Url.Action("Pesquisar", "Evento")?' + params)
                 .then(r => r.text())
                 .then(html => {
-                    tbody.innerHTML = html;
+                    resultadoEventos.innerHTML = html;
+                    aplicarModoVisualizacao();
 
                     if (!eventoSelecionadoId) {
                         atualizarBotaoEdicao();
                         return;
                     }
 
-                    const rowSelecionada = tbody.querySelector(`tr[data-evento-id="${eventoSelecionadoId}"]`);
-                    selecionarLinha(rowSelecionada);
+                    const itemSelecionado = resultadoEventos.querySelector(`[data-evento-id="${eventoSelecionadoId}"]`);
+                    selecionarItem(itemSelecionado);
                 });
         }
 
@@ -172,20 +191,41 @@
             document.getElementById(id).addEventListener('change', pesquisar);
         });
 
+        botoesVista.forEach(botao => {
+            botao.addEventListener('click', () => {
+                sessionStorage.setItem(storageKey, botao.dataset.viewMode);
+                aplicarModoVisualizacao();
+            });
+        });
+
+        aplicarModoVisualizacao();
         atualizarBotaoEdicao();
     </script>
 
     <style>
-        #tabelaEventos tr[data-evento-id] {
-            transition: background-color 0.2s ease;
+        #resultadoEventos tr[data-evento-id],
+        #resultadoEventos .catalogo-item[data-evento-id] {
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
         }
 
-        #tabelaEventos tr.evento-selecionado td {
+        #resultadoEventos tr.evento-selecionado td {
             background-color: rgba(13, 110, 253, 0.32) !important;
         }
 
-        #tabelaEventos tr.evento-selecionado:hover td {
+        #resultadoEventos tr.evento-selecionado:hover td {
             background-color: rgba(13, 110, 253, 0.4) !important;
+        }
+
+        #resultadoEventos .catalogo-item {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #resultadoEventos .catalogo-item.evento-selecionado {
+            background-color: rgba(13, 110, 253, 0.22);
+            border-color: rgba(13, 110, 253, 0.75);
+            transform: translateY(-5px); /* Efeito de "salto" */
+            box-shadow: 0 0 25px 5px rgba(13, 110, 253, 0.6); /* Brilho azul */
         }
     </style>
 }
