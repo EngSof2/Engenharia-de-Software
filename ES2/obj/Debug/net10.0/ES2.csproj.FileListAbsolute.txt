@@ -978,3 +978,6 @@ C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\ES2.pd
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\ES2.genruntimeconfig.cache
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\ref\ES2.dll
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\9n5gn2q68p-{0}-tbiys875bz-tbiys875bz.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\ke91za6jlj-{0}-t8fnem7x9h-t8fnem7x9h.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\ouf2p4f10r-{0}-640qgcgvzf-640qgcgvzf.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-zz46e8bq0s-zz46e8bq0s.gz

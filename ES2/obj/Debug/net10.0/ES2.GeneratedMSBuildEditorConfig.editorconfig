@@ -54,6 +54,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXRpdmlkYWRlXF9UYWJlbGFBdGl2aWRhZGVzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/hugom/RiderProjects/Engenharia-de-Software/ES2/Views/Bilhete/Criar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmlsaGV0ZVxDcmlhci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/hugom/RiderProjects/Engenharia-de-Software/ES2/Views/Bilhete/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmlsaGV0ZVxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -70,8 +74,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQmlsaGV0ZVxfVGFiZWxhQmlsaGV0ZXMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/hugom/RiderProjects/Engenharia-de-Software/ES2/Views/Evento/AdicionarAtividade.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXZlbnRvXEFkaWNpb25hckF0aXZpZGFkZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/hugom/RiderProjects/Engenharia-de-Software/ES2/Views/Evento/Criar.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXZlbnRvXENyaWFyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/hugom/RiderProjects/Engenharia-de-Software/ES2/Views/Evento/Detalhes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXZlbnRvXERldGFsaGVzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/hugom/RiderProjects/Engenharia-de-Software/ES2/Views/Evento/Index.cshtml]

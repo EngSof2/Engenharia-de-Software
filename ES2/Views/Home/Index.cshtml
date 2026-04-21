@@ -1,8 +1,21 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    Layout = null;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!doctype html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Horizon</title>
+    <script>
+        window.__EH_INITIAL_PAGE__ = "home";
+    </script>
+    <script type="module" crossorigin src="/event-horizon/assets/event-horizon.js"></script>
+    <link rel="stylesheet" crossorigin href="/event-horizon/assets/event-horizon.css" />
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>
+

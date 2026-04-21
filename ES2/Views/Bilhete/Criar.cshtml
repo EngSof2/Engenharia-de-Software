@@ -1,0 +1,104 @@
+@model ES2.DTOs.CriarBilheteDto
+
+@{
+    ViewData["Title"] = "Criar Bilhete";
+    var eventos = ViewBag.Eventos as IEnumerable<ES2.Models.Evento> ?? Enumerable.Empty<ES2.Models.Evento>();
+    var tipos = ViewBag.TiposBilhete as IEnumerable<ES2.Models.TipoBilhete> ?? Enumerable.Empty<ES2.Models.TipoBilhete>();
+    var idTipoSel = Model.IdTipo?.ToString() ?? "";
+    var mostrarNovoTipo = !string.IsNullOrWhiteSpace(Model.NovoTipo);
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4>@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Criar" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="IdEvento" class="form-label">Evento</label>
+                            <select asp-for="IdEvento" class="form-select">
+                                <option value="0">— Escolher evento —</option>
+                                @foreach (var ev in eventos)
+                                {
+                                    var label = ev.Data.HasValue
+                                        ? $"{ev.Nome} ({ev.Data.Value:dd/MM/yyyy})"
+                                        : ev.Nome;
+                                    <option value="@ev.IdEvento">@label</option>
+                                }
+                            </select>
+                            <span asp-validation-for="IdEvento" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de bilhete</label>
+                                <input type="hidden" asp-for="IdTipo" id="hiddenIdTipo" />
+                                <select class="form-select" id="selectTipo">
+                                    <option value="" selected="@(!mostrarNovoTipo && string.IsNullOrEmpty(idTipoSel))">— Escolher tipo —</option>
+                                    @foreach (var tipo in tipos)
+                                    {
+                                        <option value="@tipo.IdTipo" selected="@(idTipoSel == tipo.IdTipo.ToString() && !mostrarNovoTipo)">@tipo.Nome</option>
+                                    }
+                                    <option value="__nova__" selected="@mostrarNovoTipo">+ Adicionar tipo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="NovoTipo" class="form-label"></label>
+                                <input asp-for="NovoTipo" id="inputNovoTipo" class="form-control"
+                                       placeholder="Nome do novo tipo" style="display:@(mostrarNovoTipo ? "block" : "none")" />
+                                <span asp-validation-for="NovoTipo" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nome" class="form-label"></label>
+                            <input asp-for="Nome" class="form-control" placeholder="Ex.: Entrada estudante" />
+                            <span asp-validation-for="Nome" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Preco" class="form-label"></label>
+                            <input asp-for="Preco" class="form-control" type="number" min="0" step="0.01" />
+                            <span asp-validation-for="Preco" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Criar Bilhete</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        const selectTipo = document.getElementById('selectTipo');
+        const hiddenTipo = document.getElementById('hiddenIdTipo');
+        const inputNovoTipo = document.getElementById('inputNovoTipo');
+
+        function sincronizarTipo() {
+            if (selectTipo.value === '__nova__') {
+                inputNovoTipo.style.display = 'block';
+                inputNovoTipo.required = true;
+                hiddenTipo.value = '';
+                return;
+            }
+            inputNovoTipo.style.display = 'none';
+            inputNovoTipo.required = false;
+            inputNovoTipo.value = '';
+            hiddenTipo.value = selectTipo.value;
+        }
+
+        sincronizarTipo();
+        selectTipo.addEventListener('change', sincronizarTipo);
+    </script>
+}

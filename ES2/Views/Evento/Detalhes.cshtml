@@ -1,0 +1,83 @@
+@model ES2.Models.Evento
+
+@{
+    ViewData["Title"] = "Detalhes do Evento";
+}
+
+<h2>@Model.Nome</h2>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+<dl class="row">
+    <dt class="col-sm-3">Data</dt>
+    <dd class="col-sm-9">@Model.Data?.ToString("dd/MM/yyyy")</dd>
+
+    <dt class="col-sm-3">Hora</dt>
+    <dd class="col-sm-9">@Model.HoraInicio?.ToString("HH:mm")</dd>
+
+    <dt class="col-sm-3">Local</dt>
+    <dd class="col-sm-9">@Model.Local</dd>
+
+    <dt class="col-sm-3">Descrição</dt>
+    <dd class="col-sm-9">@Model.Descricao</dd>
+
+    <dt class="col-sm-3">Capacidade Máxima</dt>
+    <dd class="col-sm-9">@Model.CapMax</dd>
+
+    <dt class="col-sm-3">Categoria</dt>
+    <dd class="col-sm-9">@Model.IdCategoriaNavigation?.Nome</dd>
+</dl>
+
+<hr />
+
+<h3>Atividades</h3>
+
+@* Botão para adicionar nova atividade a este evento *@
+<a asp-action="AdicionarAtividade" asp-route-id="@Model.IdEvento" 
+   class="btn btn-success mb-3">+ Adicionar Atividade</a>
+
+@if (!Model.Atividades.Any())
+{
+    <p class="text-muted">Este evento ainda não tem atividades.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Local</th>
+                <th>Capacidade</th>
+                <th>Categoria</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var atividade in Model.Atividades)
+            {
+                <tr>
+                    <td>@atividade.Nome</td>
+                    <td>@atividade.Local</td>
+                    <td>@atividade.Capacidade</td>
+                    <td>@atividade.IdCategoriaNavigation?.Nome</td>
+                    <td>
+                        @* Botão editar - vai para o AtividadeController *@
+                        <a asp-controller="Atividade" asp-action="Editar" 
+                           asp-route-id="@atividade.IdAtividade" 
+                           class="btn btn-sm btn-warning">Editar</a>
+
+                        @* Botão remover - vai para o AtividadeController *@
+                        <a asp-controller="Atividade" asp-action="ConfirmarRemocao" 
+                           asp-route-id="@atividade.IdAtividade" 
+                           class="btn btn-sm btn-danger">Remover</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-2">← Voltar aos Eventos</a>
