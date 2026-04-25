@@ -1,0 +1,167 @@
+@using ES2.DTOs
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model ES2.Models.Evento
+
+@{
+    ViewData["Title"] = "Detalhes do Evento";
+    var atividadeForm = ViewBag.AtividadeForm as CriarAtividadeDto ?? new CriarAtividadeDto { IdEvento = Model.IdEvento };
+    var categorias = ViewBag.Categorias ?? Array.Empty<object>();
+    var mostrarCardAtividade = ViewBag.MostrarCardAtividade is bool mostrar && mostrar;
+}
+
+<section class="evento-detalhe" data-open-atividade="@(mostrarCardAtividade.ToString().ToLowerInvariant())">
+    @if (TempData["Sucesso"] != null)
+    {
+        <div class="alert alert-success evento-detalhe__alert">@TempData["Sucesso"]</div>
+    }
+
+    <div class="evento-hero">
+        <div class="evento-hero__media">
+            <div class="evento-hero__overlay">
+                <span class="evento-hero__tag">Evento</span>
+                <h1>@Model.Nome</h1>
+                <p>@(string.IsNullOrWhiteSpace(Model.Descricao) ? "Sem descricao disponivel." : Model.Descricao)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="evento-detalhe__topbar">
+        <a asp-action="Index" class="btn btn-secondary">Voltar aos Eventos</a>
+        <button type="button" class="evento-add-button" data-open-atividade-card aria-label="Adicionar atividade">
+            <span>+</span>
+        </button>
+    </div>
+
+    <div class="evento-detalhe__grid">
+        <article class="card evento-info-card">
+            <div class="card-body">
+                <h3 class="evento-section-title">Informacao Geral</h3>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Data</dt>
+                    <dd class="col-sm-8">@(Model.Data?.ToString("dd/MM/yyyy") ?? "-")</dd>
+
+                    <dt class="col-sm-4">Hora</dt>
+                    <dd class="col-sm-8">@(Model.HoraInicio?.ToString("HH:mm") ?? "-")</dd>
+
+                    <dt class="col-sm-4">Local</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Local) ? "-" : Model.Local)</dd>
+
+                    <dt class="col-sm-4">Capacidade</dt>
+                    <dd class="col-sm-8">@(Model.CapMax?.ToString() ?? "-")</dd>
+
+                    <dt class="col-sm-4">Categoria</dt>
+                    <dd class="col-sm-8">@(Model.IdCategoriaNavigation?.Nome ?? "-")</dd>
+                </dl>
+            </div>
+        </article>
+
+        <article class="card evento-atividades-card">
+            <div class="card-body">
+                <div class="evento-atividades__header">
+                    <div>
+                        <h3 class="evento-section-title mb-1">Atividades</h3>
+                        <p class="text-muted mb-0">Lista de atividades associadas a este evento.</p>
+                    </div>
+                    <button type="button" class="btn btn-success" data-open-atividade-card>Nova atividade</button>
+                </div>
+
+                @if (!Model.Atividades.Any())
+                {
+                    <div class="evento-empty-state">
+                        Este evento ainda nao tem atividades.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Local</th>
+                                <th>Capacidade</th>
+                                <th>Categoria</th>
+                                <th class="text-end">Acoes</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var atividade in Model.Atividades.OrderBy(a => a.Nome))
+                            {
+                                <tr>
+                                    <td>@atividade.Nome</td>
+                                    <td>@atividade.Local</td>
+                                    <td>@atividade.Capacidade</td>
+                                    <td>@atividade.IdCategoriaNavigation?.Nome</td>
+                                    <td class="text-end">
+                                        <a asp-controller="Atividade" asp-action="Editar" asp-route-id="@atividade.IdAtividade" class="btn btn-sm btn-warning">Editar</a>
+                                        <a asp-controller="Atividade" asp-action="ConfirmarRemocao" asp-route-id="@atividade.IdAtividade" class="btn btn-sm btn-danger">Remover</a>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </article>
+    </div>
+
+    <div class="evento-atividade-modal @(mostrarCardAtividade ? "is-open" : string.Empty)" data-atividade-modal>
+        <div class="evento-atividade-modal__backdrop" data-close-atividade-card></div>
+        <div class="evento-atividade-modal__card card" role="dialog" aria-modal="true" aria-labelledby="atividade-modal-title">
+            <div class="card-body">
+                <div class="evento-atividade-modal__header">
+                    <div>
+                        <span class="evento-hero__tag">Nova atividade</span>
+                        <h3 id="atividade-modal-title" class="mb-1">Adicionar atividade a @Model.Nome</h3>
+                    </div>
+                    <button type="button" class="evento-atividade-modal__close" data-close-atividade-card aria-label="Fechar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <form asp-action="AdicionarAtividade" method="post" class="evento-atividade-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="IdEvento" value="@Model.IdEvento" />
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label for="atividadeNome" class="form-label">Nome da Atividade</label>
+                        <input id="atividadeNome" name="Nome" class="form-control" value="@atividadeForm.Nome" />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Nome" data-valmsg-replace="true">@Html.ValidationMessage("Nome")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="atividadeLocal" class="form-label">Local</label>
+                        <input id="atividadeLocal" name="Local" class="form-control" value="@atividadeForm.Local" />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Local" data-valmsg-replace="true">@Html.ValidationMessage("Local")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="atividadeCapacidade" class="form-label">Capacidade</label>
+                        <input id="atividadeCapacidade" name="Capacidade" class="form-control" type="number" min="1" value="@(atividadeForm.Capacidade == 0 ? string.Empty : atividadeForm.Capacidade)" />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Capacidade" data-valmsg-replace="true">@Html.ValidationMessage("Capacidade")</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="atividadeCategoria" class="form-label">Categoria</label>
+                        <select id="atividadeCategoria" name="IdCategoria" class="form-select" asp-items="@(new SelectList(categorias, "IdCategoria", "Nome", atividadeForm.IdCategoria))">
+                            <option value="">-- Seleciona uma categoria --</option>
+                        </select>
+                        <span class="text-danger field-validation-valid" data-valmsg-for="IdCategoria" data-valmsg-replace="true">@Html.ValidationMessage("IdCategoria")</span>
+                    </div>
+
+                    <div class="evento-atividade-form__actions">
+                        <button type="button" class="btn btn-secondary" data-close-atividade-card>Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar atividade</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
