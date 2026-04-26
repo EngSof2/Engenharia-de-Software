@@ -36,8 +36,12 @@
 <h3>Atividades</h3>
 
 @* Botão para adicionar nova atividade a este evento *@
-<a asp-action="AdicionarAtividade" asp-route-id="@Model.IdEvento" 
-   class="btn btn-success mb-3">+ Adicionar Atividade</a>
+@if (User.IsInRole("Admin"))
+{
+    <a asp-controller="Atividade" asp-action="Criar" 
+       asp-route-idEvento="@Model.IdEvento" 
+       class="btn btn-success mb-3">+ Adicionar Atividade</a>
+}
 
 @if (!Model.Atividades.Any())
 {

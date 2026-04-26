@@ -39,14 +39,12 @@ public class LoginController : Controller
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Nome),
-                    new Claim(ClaimTypes.Role, "Utilizador") 
+                    new Claim(ClaimTypes.Role, user.TipoUti == 1 ? "Admin" : "Utilizador")
                 };
 
                 var identity = new ClaimsIdentity(claims, "CookieAuth");
                 var principal = new ClaimsPrincipal(identity);
 
-                // 2. FORMA CORRETA: Usa apenas HttpContext.SignInAsync
-                // Isto vai ativar o 'using' lá de cima e tirar o erro vermelho
                 await HttpContext.SignInAsync("CookieAuth", principal);
 
                 return RedirectToAction("Index", "Home");
@@ -57,7 +55,6 @@ public class LoginController : Controller
         return View(model);
     }
 
-    // Aproveita e adiciona já o Logout aqui em baixo!
     [HttpPost]
     public async Task<IActionResult> Logout()
     {

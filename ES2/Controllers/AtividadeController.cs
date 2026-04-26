@@ -15,7 +15,7 @@ public class AtividadeController : Controller
     private readonly IEventoRepository _eventoRepository;
     private readonly ICategoriaRepository _categoriaRepository;
     private readonly AppDbContext _context;
-    
+
     public AtividadeController(
         IAtividadeRepository atividadeRepository,
         IEventoRepository eventoRepository,
@@ -23,18 +23,18 @@ public class AtividadeController : Controller
         AppDbContext context)
     {
         _atividadeRepository = atividadeRepository;
-        _eventoRepository = eventoRepository;         
+        _eventoRepository = eventoRepository;
         _categoriaRepository = categoriaRepository;
         _context = context;
     }
-    
+
     public async Task<IActionResult> Editar(int id)
     {
         var atividade = await _atividadeRepository.GetByIdAsync(id);
 
         if (atividade == null)
             return NotFound();
-        
+
         var dto = new EditarAtividadeDto
         {
             Nome = atividade.Nome,
@@ -42,23 +42,25 @@ public class AtividadeController : Controller
             Capacidade = atividade.Capacidade,
             IdCategoria = atividade.IdCategoria
         };
-        
+
         ViewBag.AtividadeId = id;
         ViewBag.EventoId = atividade.IdEvento;
 
         return View(dto);
     }
-    
-    public async Task<IActionResult> Index(string? nome, string? local, int? capacidade, int? idCategoria, int? idEvento)
+
+    public async Task<IActionResult> Index(string? nome, string? local, int? capacidade, int? idCategoria,
+        int? idEvento)
     {
         // 1. Carregamos a lista base
         var atividades = await _atividadeRepository.GetAllAsync();
-        
+
         if (!string.IsNullOrEmpty(nome))
             atividades = atividades.Where(a => a.Nome.Contains(nome, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(local))
-            atividades = atividades.Where(a => a.Local != null && a.Local.Contains(local, StringComparison.OrdinalIgnoreCase));
+            atividades = atividades.Where(a =>
+                a.Local != null && a.Local.Contains(local, StringComparison.OrdinalIgnoreCase));
 
         if (capacidade.HasValue)
             atividades = atividades.Where(a => a.Capacidade >= capacidade.Value);
@@ -68,7 +70,7 @@ public class AtividadeController : Controller
 
         if (idEvento.HasValue)
             atividades = atividades.Where(a => a.IdEvento == idEvento.Value);
-        
+
         ViewBag.Categorias = await _categoriaRepository.GetAllAsync();
         ViewBag.Eventos = await _eventoRepository.GetAllAsync();
 
@@ -83,29 +85,31 @@ public class AtividadeController : Controller
     }
 
 
-public async Task<IActionResult> Pesquisar(string? nome, string? local, int? capacidade, int? idCategoria, int? idEvento)
-{
-    var atividades = await _atividadeRepository.GetAllAsync();
+    public async Task<IActionResult> Pesquisar(string? nome, string? local, int? capacidade, int? idCategoria,
+        int? idEvento)
+    {
+        var atividades = await _atividadeRepository.GetAllAsync();
 
-    // Aplicar a mesma lógica de filtro que o Index
-    if (!string.IsNullOrEmpty(nome))
-        atividades = atividades.Where(a => a.Nome.Contains(nome, StringComparison.OrdinalIgnoreCase));
-    
-    if (!string.IsNullOrEmpty(local))
-        atividades = atividades.Where(a => a.Local != null && a.Local.Contains(local, StringComparison.OrdinalIgnoreCase));
+        // Aplicar a mesma lógica de filtro que o Index
+        if (!string.IsNullOrEmpty(nome))
+            atividades = atividades.Where(a => a.Nome.Contains(nome, StringComparison.OrdinalIgnoreCase));
 
-    if (capacidade.HasValue)
-        atividades = atividades.Where(a => a.Capacidade >= capacidade.Value);
+        if (!string.IsNullOrEmpty(local))
+            atividades = atividades.Where(a =>
+                a.Local != null && a.Local.Contains(local, StringComparison.OrdinalIgnoreCase));
 
-    if (idCategoria.HasValue)
-        atividades = atividades.Where(a => a.IdCategoria == idCategoria.Value);
-    
-    if (idEvento.HasValue)
-        atividades = atividades.Where(a => a.IdEvento == idEvento.Value);
-    
-    ViewBag.AtividadesInscritas = await ObterAtividadesInscritasAsync();
-    return PartialView("_ResultadosAtividades", atividades);
-}
+        if (capacidade.HasValue)
+            atividades = atividades.Where(a => a.Capacidade >= capacidade.Value);
+
+        if (idCategoria.HasValue)
+            atividades = atividades.Where(a => a.IdCategoria == idCategoria.Value);
+
+        if (idEvento.HasValue)
+            atividades = atividades.Where(a => a.IdEvento == idEvento.Value);
+
+        ViewBag.AtividadesInscritas = await ObterAtividadesInscritasAsync();
+        return PartialView("_ResultadosAtividades", atividades);
+    }
 
 
     // POST: /Atividade/Editar/5
@@ -325,4 +329,44 @@ public async Task<IActionResult> Pesquisar(string? nome, string? local, int? cap
 
         return new HashSet<int>(ids);
     }
-}
+    
+    [HttpGet]
+    public async Task<IActionResult> Criar(int idEvento)
+    {
+        var evento = await _eventoRepository.GetByIdAsync(idEvento);
+        if (evento == null) return NotFound();
+
+        ViewBag.EventoNome = evento.Nome;
+        ViewBag.EventoId = idEvento;
+        ViewBag.Categorias = await _categoriaRepository.GetAllAsync();
+
+        var dto = new CriarAtividadeDto { IdEvento = idEvento };
+        return View("CriarAtividade", dto);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Criar(CriarAtividadeDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Categorias = await _categoriaRepository.GetAllAsync();
+            ViewBag.EventoId = dto.IdEvento;
+            return View("CriarAtividade", dto);
+        }
+
+        var atividade = new Atividade
+        {
+            IdEvento = dto.IdEvento,
+            Nome = dto.Nome,
+            Local = dto.Local,
+            Capacidade = dto.Capacidade,
+            IdCategoria = dto.IdCategoria
+        };
+
+        await _atividadeRepository.AddAsync(atividade);
+
+        TempData["Sucesso"] = "Atividade criada com sucesso!";
+        return RedirectToAction("Detalhes", "Evento", new { id = dto.IdEvento });
+    }
+}   

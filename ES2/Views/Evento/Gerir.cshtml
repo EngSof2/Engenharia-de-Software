@@ -1,0 +1,47 @@
+@model IEnumerable<ES2.Models.Evento>
+@{
+    ViewData["Title"] = "Gerir Eventos";
+}
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+    <h2>Gerir Eventos</h2>
+    <a asp-action="Criar" class="btn btn-primary">+ Criar Evento</a>
+</div>
+
+@if (TempData["Sucesso"] != null)
+{
+    <div class="alert alert-success">@TempData["Sucesso"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Data</th>
+            <th>Local</th>
+            <th>Categoria</th>
+            <th>Atividades</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var evento in Model)
+        {
+            <tr>
+                <td>@evento.Nome</td>
+                <td>@evento.Data?.ToString("dd/MM/yyyy")</td>
+                <td>@evento.Local</td>
+                <td>@evento.IdCategoriaNavigation?.Nome</td>
+                <td>@evento.Atividades.Count()</td>
+                <td>
+                    <a asp-action="Detalhes" asp-route-id="@evento.IdEvento" 
+                       class="btn btn-sm btn-info">Ver/Gerir</a>
+                    <a asp-action="Editar" asp-route-id="@evento.IdEvento" 
+                       class="btn btn-sm btn-warning">Editar</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

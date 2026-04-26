@@ -101,13 +101,19 @@ export function EventDetailsView({ event, onBack }: { event: UiEventDetails; onB
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-[1600px] mx-auto px-10 pt-20 pb-32">
       <div className="flex items-center justify-between mb-10 border-b border-white/10 pb-8">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-xs font-bold font-mono tracking-widest uppercase text-white/60 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Voltar
-        </button>
-      </div>
+  <button
+    onClick={onBack}
+    className="flex items-center gap-2 text-xs font-bold font-mono tracking-widest uppercase text-white/60 hover:text-white transition-colors"
+  >
+    <ArrowLeft className="w-4 h-4" /> Voltar
+  </button>
+  
+    href={`/Atividade/Criar?idEvento=${event.id}`}
+    className="px-6 py-2.5 bg-yellow-400 text-black text-xs font-bold font-mono uppercase tracking-widest rounded-full hover:bg-yellow-300 transition-colors"
+  >
+    + Adicionar Atividade
+  </a>
+</div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-16">
         <div>

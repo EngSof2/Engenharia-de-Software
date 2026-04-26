@@ -12,7 +12,6 @@
 </head>
 <body>
 <header>
-    @* A classe 'navbar-dark' ajuda o Bootstrap a entender que o fundo é escuro *@
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark mb-3 shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand text-white" asp-area="" asp-controller="Home" asp-action="Index">ES2</a>
@@ -40,9 +39,15 @@
                                 <li>
                                     <a class="dropdown-item" asp-controller="Evento" asp-action="Index">Ver Eventos</a>
                                 </li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Evento" asp-action="Criar">Criar Evento</a>
-                                </li>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Evento" asp-action="Criar">Criar Evento</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Evento" asp-action="Gerir">Gerir Eventos</a>
+                                    </li>
+                                }
                             </ul>
                         </li>
                         
@@ -64,7 +69,6 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="navbarDropdown">
                                 <li>
-                                    @* ADICIONADA A CLASSE dropdown-item-details AQUI *@
                                     <a class="dropdown-item dropdown-item-details" asp-controller="Utilizador" asp-action="Detalhes">
                                         <i class="bi bi-info-circle"></i> Mais Detalhes
                                     </a>
@@ -72,7 +76,6 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form asp-controller="Login" asp-action="Logout" method="post" class="p-0 m-0">
-                                        @* Mudamos para a classe dropdown-item-logout *@
                                         <button type="submit" class="dropdown-item dropdown-item-logout fw-bold">
                                             <i class="bi bi-box-arrow-right"></i> Sair
                                         </button>

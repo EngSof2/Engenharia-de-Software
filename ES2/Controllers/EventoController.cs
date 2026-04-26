@@ -244,6 +244,21 @@ public class EventoController : Controller
         return View(dto);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Detalhes(int id)
+    {
+        var evento = await _context.Eventos
+            .Include(e => e.Atividades)
+            .ThenInclude(a => a.IdCategoriaNavigation)
+            .Include(e => e.IdCategoriaNavigation)
+            .FirstOrDefaultAsync(e => e.IdEvento == id);
+
+        if (evento == null)
+            return NotFound();
+
+        return View(evento);
+    }
+
     private async Task<int> ObterOuCriarCategoriaAsync(string nomeCategoria)
     {
         var categoriaExistente = await _context.Categorias
@@ -267,4 +282,17 @@ public class EventoController : Controller
         ViewBag.TituloFormulario = emEdicao ? "Editar Evento" : "Criar Evento";
         ViewBag.TextoBotaoSubmeter = emEdicao ? "Guardar Alteracoes" : "Criar Evento";
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Gerir()
+    {
+        var eventos = await _context.Eventos
+            .Include(e => e.IdCategoriaNavigation)
+            .Include(e => e.Atividades)
+            .OrderBy(e => e.Data)
+            .ToListAsync();
+
+        return View(eventos);
+    }
 }
+   
