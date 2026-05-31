@@ -4,6 +4,7 @@
     ViewData["Title"] = ViewBag.TituloFormulario ?? "Criar Evento";
     ViewData["FullBleed"] = true;
     ViewData["HideFooter"] = true;
+    ViewData["UseEventHorizonNavbar"] = true;
     var categorias = ViewBag.Categorias as IEnumerable<ES2.Models.Categoria> ?? Enumerable.Empty<ES2.Models.Categoria>();
     var emEdicao = ViewBag.EmEdicao != null && (bool)ViewBag.EmEdicao;
     var titulo = ViewBag.TituloFormulario as string ?? "Criar Evento";

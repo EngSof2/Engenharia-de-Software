@@ -9,6 +9,8 @@ import { ChevronDown, ArrowRight, ArrowLeft, Circle, Info, Layers, Users, Zap } 
 import { EventsView, type UiEvent } from "./components/EventsView";
 import { CreateEventView } from "./components/CreateEventView";
 import { EventDetailsView } from "./components/EventDetailsView";
+import { LoginView } from "./components/LoginView";
+import { RegisterView } from "./components/RegisterView";
 
 const POPULAR_EVENTS = [
   {
@@ -46,7 +48,7 @@ const POPULAR_EVENTS = [
   }
 ];
 
-type Page = "home" | "events" | "create_event" | "event_details";
+type Page = "home" | "events" | "create_event" | "event_details" | "login" | "register";
 
 type ApiEvent = {
   id: number;
@@ -181,6 +183,11 @@ export default function App() {
     } finally {
       window.location.href = "/Home/Index";
     }
+  };
+
+  const completeAuth = (userName: string | null) => {
+    setAuth({ isAuthenticated: true, userName });
+    loadAuth();
   };
 
   useEffect(() => {
@@ -341,12 +348,12 @@ export default function App() {
             </div>
           ) : (
             <div className="flex items-center gap-8 text-sm font-medium tracking-wide text-white/60">
-              <a href="/Login/Index" className="hover:text-white transition-colors">
+              <button type="button" onClick={() => setCurrentPage("login")} className="hover:text-white transition-colors">
                 Login
-              </a>
-              <a href="/Registo/Registo" className="hover:text-white transition-colors">
+              </button>
+              <button type="button" onClick={() => setCurrentPage("register")} className="hover:text-white transition-colors">
                 Registo
-              </a>
+              </button>
             </div>
           )}
         </nav>
@@ -509,6 +516,16 @@ export default function App() {
             image: selectedEvent.image,
           }}
           onBack={() => setCurrentPage("events")}
+        />
+      ) : currentPage === 'login' ? (
+        <LoginView
+          onNavigate={(page) => setCurrentPage(page)}
+          onLogin={completeAuth}
+        />
+      ) : currentPage === 'register' ? (
+        <RegisterView
+          onNavigate={(page) => setCurrentPage(page)}
+          onLogin={completeAuth}
         />
       ) : null}
     </div>

@@ -3,6 +3,7 @@
     var hideChrome = ViewData["HideChrome"] is true;
     var hideFooter = ViewData["HideFooter"] is true;
     var fullBleed = hideChrome || ViewData["FullBleed"] is true;
+    var useEventHorizonNavbar = ViewData["UseEventHorizonNavbar"] is true;
 }
 <html lang="en">
 <head>
@@ -16,10 +17,78 @@
     <link rel="stylesheet" href="~/css/mensagens-widget.css" asp-append-version="true"/>
     <link rel="stylesheet" href="~/ES2.styles.css" asp-append-version="true"/>
 </head>
-<body class="@(hideChrome ? "eh-shellless" : "")">
+<body class="@($"{(hideChrome ? "eh-shellless" : string.Empty)} {(useEventHorizonNavbar ? "eh-has-new-nav" : string.Empty)}")">
 @if (!hideChrome)
 {
 <header>
+    @if (useEventHorizonNavbar)
+    {
+    <nav class="eh-topnav">
+        <div class="eh-topnav-inner">
+            <div class="eh-topnav-left">
+                <a class="eh-topnav-brand" asp-controller="Home" asp-action="Index">
+                    <span class="eh-topnav-mark"><span></span></span>
+                    <span>Event Horizon</span>
+                </a>
+
+                <ul class="eh-topnav-links">
+                    <li>
+                        <a asp-controller="Home" asp-action="Index">Pagina inicial</a>
+                    </li>
+                    <li class="eh-topnav-dropdown">
+                        <button type="button">
+                            Eventos
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="eh-topnav-menu">
+                            <a asp-controller="Home" asp-action="Index" asp-route-page="events">Ver Eventos</a>
+                            @if (User.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Organizador")))
+                            {
+                                <a asp-controller="Evento" asp-action="Criar">Criar Eventos</a>
+                                <a asp-controller="Evento" asp-action="Gerir">Gerir Eventos</a>
+                            }
+                        </div>
+                    </li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li>
+                            <a asp-controller="Atividade" asp-action="Index">Atividades</a>
+                        </li>
+                        <li>
+                            <a asp-controller="Bilhete" asp-action="Index">Bilhetes</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="eh-topnav-dropdown eh-topnav-user">
+                    <button type="button">
+                        @(User.Identity.Name ?? "Utilizador")
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="eh-topnav-menu eh-topnav-menu--right">
+                        <a asp-controller="Utilizador" asp-action="Detalhes">Mais Detalhes</a>
+                        <a asp-controller="Bilhete" asp-action="HistoricoCompras">Compras</a>
+                        <form asp-controller="Login" asp-action="Logout" method="post">
+                            <button type="submit">Sair</button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="eh-topnav-auth">
+                    <a asp-controller="Login" asp-action="Index">Login</a>
+                    <a asp-controller="Registo" asp-action="Registo">Registo</a>
+                </div>
+            }
+        </div>
+    </nav>
+    }
+    else
+    {
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark mb-3 shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand text-white" asp-area="" asp-controller="Home" asp-action="Index">ES2</a>
@@ -116,6 +185,7 @@
             </div>
         </div>
     </nav>
+    }
 </header>
 }
 <div class="@(fullBleed ? "eh-full-bleed" : "container")">
