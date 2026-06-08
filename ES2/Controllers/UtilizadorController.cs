@@ -82,6 +82,70 @@ public class UtilizadorController : Controller
         return RedirectToAction("EditarPerfil", new { id });
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    public async Task<IActionResult> GerirUtilizadores()
+    {
+        var utilizadores = await _utilizadorRepository.GetAllAsync();
+        return View(utilizadores.OrderBy(u => u.Nome));
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    public async Task<IActionResult> EditarUtilizadorAdmin(int id)
+    {
+        var utilizador = await _utilizadorRepository.GetByIdAsync(id);
+        if (utilizador == null)
+            return NotFound();
+
+        var dto = new GerirUtilizadorAdminDto
+        {
+            Nome = utilizador.Nome,
+            Email = utilizador.Email,
+            Telemovel = utilizador.Telemovel,
+            TipoUti = utilizador.TipoUti
+        };
+
+        ViewBag.UtilizadorId = id;
+        ViewBag.UtilizadorNome = utilizador.Nome;
+        return View(dto);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarUtilizadorAdmin(int id, GerirUtilizadorAdminDto dto)
+    {
+        var utilizador = await _utilizadorRepository.GetByIdAsync(id);
+        if (utilizador == null)
+            return NotFound();
+
+        var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var isOwnAccount = adminIdStr == id.ToString();
+
+        if (!string.IsNullOrEmpty(dto.Email) && await _utilizadorRepository.EmailJaExisteAsync(dto.Email, id))
+            ModelState.AddModelError(nameof(dto.Email), "Este email já está a ser utilizado.");
+
+        if (!ModelState.IsValid)
+        {
+            ViewBag.UtilizadorId = id;
+            ViewBag.UtilizadorNome = utilizador.Nome;
+            return View(dto);
+        }
+
+        utilizador.Nome = dto.Nome;
+        utilizador.Email = dto.Email;
+        utilizador.Telemovel = dto.Telemovel;
+
+        if (!isOwnAccount)
+            utilizador.TipoUti = dto.TipoUti;
+
+        await _utilizadorRepository.UpdateAsync(utilizador);
+
+        TempData["Sucesso"] = "Utilizador atualizado com sucesso!";
+        return RedirectToAction("GerirUtilizadores");
+    }
+
     [HttpGet]
     public async Task<IActionResult> Detalhes()
     {
