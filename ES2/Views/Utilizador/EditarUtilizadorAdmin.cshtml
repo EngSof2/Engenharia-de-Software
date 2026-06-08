@@ -1,0 +1,83 @@
+@model ES2.DTOs.GerirUtilizadorAdminDto
+@{
+    ViewData["Title"] = "Editar Utilizador";
+    var utilizadorId = ViewBag.UtilizadorId;
+    var utilizadorNome = ViewBag.UtilizadorNome as string;
+
+    var adminIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var isOwnAccount = adminIdStr == utilizadorId?.ToString();
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a asp-action="GerirUtilizadores" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+    <h2 class="mb-0"><i class="bi bi-person-gear"></i> Editar Utilizador</h2>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">
+                <i class="bi bi-person"></i> @utilizadorNome
+                <span class="badge bg-secondary ms-2">#@utilizadorId</span>
+            </div>
+            <div class="card-body">
+                <form asp-action="EditarUtilizadorAdmin" asp-route-id="@utilizadorId" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Nome" class="form-label fw-semibold"></label>
+                        <input asp-for="Nome" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Nome" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <input asp-for="Email" class="form-control" type="email" autocomplete="off" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Telemovel" class="form-label fw-semibold"></label>
+                        <input asp-for="Telemovel" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Telemovel" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="TipoUti" class="form-label fw-semibold">Perfil / Permissões</label>
+                        @if (isOwnAccount)
+                        {
+                            <input type="hidden" asp-for="TipoUti" />
+                            <input class="form-control" value="@(Model.TipoUti == 1 ? "Admin" : Model.TipoUti == 3 ? "Organizador" : "Utilizador")" disabled />
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Não pode alterar o perfil da sua própria conta.
+                            </div>
+                        }
+                        else
+                        {
+                            <select asp-for="TipoUti" class="form-select">
+                                <option value="2">Utilizador</option>
+                                <option value="3">Organizador</option>
+                                <option value="1">Admin</option>
+                            </select>
+                            <span asp-validation-for="TipoUti" class="text-danger small"></span>
+                        }
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2"></i> Guardar
+                        </button>
+                        <a asp-action="GerirUtilizadores" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
