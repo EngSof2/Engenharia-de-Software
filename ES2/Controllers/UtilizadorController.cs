@@ -84,10 +84,9 @@ public class UtilizadorController : Controller
 
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GerirUtilizadores()
+    public IActionResult GerirUtilizadores()
     {
-        var utilizadores = await _utilizadorRepository.GetAllAsync();
-        return View(utilizadores.OrderBy(u => u.Nome));
+        return RedirectToAction("Index", "Home", new { page = "users" });
     }
 
     [Authorize(Roles = "Admin")]

@@ -20,7 +20,7 @@ public class LoginController : Controller
     [HttpGet]
     public IActionResult Index()
     {
-        return View();
+        return RedirectToAction("Index", "Home", new { page = "login" });
     }
 
     [HttpPost]
@@ -39,7 +39,12 @@ public class LoginController : Controller
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Nome),
-                    new Claim(ClaimTypes.Role, user.TipoUti == 1 ? "Admin" : "Utilizador")
+                    new Claim(ClaimTypes.Role, user.TipoUti switch
+                    {
+                        1 => "Admin",
+                        3 => "Organizador",
+                        _ => "Utilizador"
+                    })
                 };
 
                 var identity = new ClaimsIdentity(claims, "CookieAuth");

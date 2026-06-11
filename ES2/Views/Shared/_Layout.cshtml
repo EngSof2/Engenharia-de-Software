@@ -10,6 +10,8 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - ES2</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico?v=event-horizon-mark" />
+    <link rel="icon" type="image/svg+xml" href="~/event-horizon-icon.svg" asp-append-version="true" />
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
@@ -80,8 +82,8 @@
             else
             {
                 <div class="eh-topnav-auth">
-                    <a asp-controller="Login" asp-action="Index">Login</a>
-                    <a asp-controller="Registo" asp-action="Registo">Registo</a>
+                    <a asp-controller="Home" asp-action="Index" asp-route-page="login">Login</a>
+                    <a asp-controller="Home" asp-action="Index" asp-route-page="register">Registo</a>
                 </div>
             }
         </div>
@@ -140,7 +142,7 @@
                                 <a class="nav-link text-white" asp-controller="Relatorios" asp-action="Index">Relatórios</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Utilizador" asp-action="GerirUtilizadores">Utilizadores</a>
+                                <a class="nav-link text-white" asp-controller="Home" asp-action="Index" asp-route-page="users">Utilizadores</a>
                             </li>
                         }
                     }
@@ -178,10 +180,10 @@
                     else
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Login" asp-action="Index">Login</a>
+                            <a class="nav-link text-white" asp-controller="Home" asp-action="Index" asp-route-page="login">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Registo" asp-action="Registo">Registo</a>
+                            <a class="nav-link text-white" asp-controller="Home" asp-action="Index" asp-route-page="register">Registo</a>
                         </li>
                     }
                 </ul>

@@ -30,17 +30,40 @@ public class AuthApiController : ControllerBase
         return Ok(new
         {
             isAuthenticated,
-            userName = isAuthenticated ? User.Identity!.Name : null
+            userName = isAuthenticated ? User.Identity!.Name : null,
+            isAdmin = isAuthenticated && User.IsInRole("Admin")
         });
     }
 
     [Authorize]
     [HttpGet("me")]
-    public IActionResult Me()
+    public async Task<IActionResult> Me()
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Utilizador? utilizador = null;
+
+        if (int.TryParse(userId, out var id))
+            utilizador = await _context.Utilizadores.FirstOrDefaultAsync(u => u.IdUti == id);
+
+        utilizador ??= await _context.Utilizadores.FirstOrDefaultAsync(u => u.Nome == User.Identity!.Name);
+
+        if (utilizador == null)
+            return NotFound();
+
         return Ok(new
         {
-            userName = User.Identity?.Name
+            id = utilizador.IdUti,
+            userName = utilizador.Nome,
+            nome = utilizador.Nome,
+            email = utilizador.Email,
+            telemovel = utilizador.Telemovel,
+            tipoUti = utilizador.TipoUti,
+            perfil = utilizador.TipoUti switch
+            {
+                1 => "Admin",
+                3 => "Organizador",
+                _ => "Utilizador"
+            }
         });
     }
 
@@ -60,7 +83,14 @@ public class AuthApiController : ControllerBase
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, user.Nome),
-            new(ClaimTypes.Role, user.TipoUti == 1 ? "Admin" : "Utilizador")
+            new(ClaimTypes.Email, user.Email ?? ""),
+            new(ClaimTypes.NameIdentifier, user.IdUti.ToString()),
+            new(ClaimTypes.Role, user.TipoUti switch
+            {
+                1 => "Admin",
+                3 => "Organizador",
+                _ => "Utilizador"
+            })
         };
 
         var identity = new ClaimsIdentity(claims, "CookieAuth");
@@ -87,7 +117,14 @@ public class AuthApiController : ControllerBase
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, user.Nome),
-            new(ClaimTypes.Role, user.TipoUti == 1 ? "Admin" : "Utilizador")
+            new(ClaimTypes.Email, user.Email ?? ""),
+            new(ClaimTypes.NameIdentifier, user.IdUti.ToString()),
+            new(ClaimTypes.Role, user.TipoUti switch
+            {
+                1 => "Admin",
+                3 => "Organizador",
+                _ => "Utilizador"
+            })
         };
 
         var identity = new ClaimsIdentity(claims, "CookieAuth");

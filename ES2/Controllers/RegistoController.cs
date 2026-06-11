@@ -16,7 +16,7 @@ public class RegistoController : Controller
     [HttpGet]
     public IActionResult Registo()
     {
-        return View();
+        return RedirectToAction("Index", "Home", new { page = "register" });
     }
 
     [HttpPost]

@@ -8,14 +8,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Event Horizon</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico?v=event-horizon-mark" />
+    <link rel="icon" type="image/svg+xml" href="~/event-horizon-icon.svg" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/mensagens-widget.css" asp-append-version="true" />
     <script>
-        const initialPage = new URLSearchParams(window.location.search).get("page");
-        window.__EH_INITIAL_PAGE__ = initialPage === "events" ? "events" : "home";
+        const initialPage = new URLSearchParams(window.location.search).get("page")?.toLowerCase();
+        const spaPages = new Set(["events", "login", "register", "users", "edit_user", "profile", "edit_profile"]);
+        window.__EH_INITIAL_PAGE__ = spaPages.has(initialPage) ? initialPage : "home";
     </script>
     <script type="module" crossorigin src="/event-horizon/assets/event-horizon.js"></script>
     <link rel="stylesheet" crossorigin href="/event-horizon/assets/event-horizon.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
 <div id="root"></div>
