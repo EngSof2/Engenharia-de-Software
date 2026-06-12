@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="~/css/mensagens-widget.css" asp-append-version="true" />
     <script>
         const initialPage = new URLSearchParams(window.location.search).get("page")?.toLowerCase();
-        const spaPages = new Set(["events", "login", "register", "users", "edit_user", "profile", "edit_profile"]);
+        const spaPages = new Set(["events", "login", "register", "users", "edit_user", "profile", "edit_profile", "purchase_history"]);
         window.__EH_INITIAL_PAGE__ = spaPages.has(initialPage) ? initialPage : "home";
     </script>
     <script type="module" crossorigin src="/event-horizon/assets/event-horizon.js"></script>

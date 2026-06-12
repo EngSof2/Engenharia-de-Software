@@ -2150,4 +2150,8 @@ C:\Users\hugom\AppData\Local\Temp\es2-build-check\ES2.deps.json
 C:\Users\hugom\AppData\Local\Temp\es2-build-check\ES2.runtimeconfig.json
 C:\Users\hugom\AppData\Local\Temp\es2-build-check\ES2.dll
 C:\Users\hugom\AppData\Local\Temp\es2-build-check\ES2.pdb
-C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-lultp7kt9s-lultp7kt9s.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\bin\Debug\net10.0\ClientApp\package.json
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\bin\Debug\net10.0\ClientApp\tsconfig.json
+C:\Users\hugom\AppData\Local\Temp\es2-build-check\ClientApp\package.json
+C:\Users\hugom\AppData\Local\Temp\es2-build-check\ClientApp\tsconfig.json
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-sfjod6o46r-sfjod6o46r.gz
