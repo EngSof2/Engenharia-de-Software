@@ -596,6 +596,7 @@ public class EventosApiController : ControllerBase
         public int? QuantidadeGold { get; set; }
         public int? QuantidadeVip { get; set; }
         public int? IdCategoria { get; set; }
+        public string? NovaCategoria { get; set; }
         public string? ImageUrl { get; set; }
     }
 
@@ -779,13 +780,56 @@ public class EventosApiController : ControllerBase
                 return BadRequest("Deves disponibilizar pelo menos um bilhete.");
         }
 
+        var novaCategoria = req.NovaCategoria?.Trim();
+        int? idCategoria = req.IdCategoria;
+        Categoria? categoriaEditada = null;
+
+        if (!string.IsNullOrWhiteSpace(novaCategoria))
+        {
+            var categoria = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.Nome.ToLower() == novaCategoria.ToLower(), ct);
+
+            if (categoria == null)
+            {
+                categoria = new Categoria { Nome = novaCategoria };
+                _context.Categorias.Add(categoria);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            idCategoria = categoria.IdCategoria;
+            categoriaEditada = categoria;
+        }
+        else if (idCategoria.HasValue)
+        {
+            categoriaEditada = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.IdCategoria == idCategoria.Value, ct);
+
+            if (categoriaEditada == null)
+                return BadRequest("A categoria selecionada nao existe.");
+        }
+
         evento.Nome = req.Nome.Trim();
         evento.Data = data;
         evento.HoraInicio = horaInicio;
         evento.Local = req.Local.Trim();
         evento.Descricao = req.Descricao.Trim();
         evento.CapMax = req.Capacidade;
-        evento.IdCategoria = req.IdCategoria;
+        evento.IdCategoria = idCategoria;
+
+        if (idCategoria.HasValue)
+        {
+            var temCategoriaEvento = await _context.CategoriaEventos
+                .AnyAsync(c => c.IdEvento == evento.IdEvento && c.IdCategoria == idCategoria.Value, ct);
+
+            if (!temCategoriaEvento)
+            {
+                _context.CategoriaEventos.Add(new CategoriaEvento
+                {
+                    IdEvento = evento.IdEvento,
+                    IdCategoria = idCategoria.Value
+                });
+            }
+        }
 
         await _context.SaveChangesAsync(ct);
 
@@ -829,7 +873,13 @@ public class EventosApiController : ControllerBase
                 req.QuantidadeVip!.Value);
         }
 
-        return Ok("Evento editado com sucesso.");
+        return Ok(new
+        {
+            message = "Evento editado com sucesso.",
+            categoria = categoriaEditada == null
+                ? null
+                : new { id = categoriaEditada.IdCategoria, nome = categoriaEditada.Nome }
+        });
     }
 
     [Authorize(Roles = "Admin,Organizador")]
@@ -890,6 +940,37 @@ public class EventosApiController : ControllerBase
             await tx.RollbackAsync(ct);
             return Problem("Nao foi possivel cancelar o evento.");
         }
+    }
+
+    [Authorize(Roles = "Admin,Organizador")]
+    [HttpPost("{id:int}/reativar")]
+    public async Task<IActionResult> Reativar(int id, CancellationToken ct)
+    {
+        var evento = await _context.Eventos
+            .Include(e => e.BilhetesEventos)
+            .Include(e => e.Atividades)
+            .FirstOrDefaultAsync(e => e.IdEvento == id, ct);
+
+        if (evento == null)
+            return NotFound("O evento nao existe.");
+
+        if (!await TemPermissaoEditarEventoAsync(evento, ct))
+            return Forbid("Nao tens permissao para reativar este evento.");
+
+        if (!evento.IsCancelado)
+            return Ok("Evento ja estava ativo.");
+
+        evento.IsCancelado = false;
+
+        foreach (var atividade in evento.Atividades)
+            atividade.IsCancelado = false;
+
+        foreach (var bilheteEvento in evento.BilhetesEventos)
+            bilheteEvento.IsCancelado = false;
+
+        await _context.SaveChangesAsync(ct);
+
+        return Ok("Evento reativado com sucesso.");
     }
 
     private async Task<bool> TemPermissaoEditarEventoAsync(Evento evento, CancellationToken ct)

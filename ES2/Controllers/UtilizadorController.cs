@@ -19,22 +19,9 @@ public class UtilizadorController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditarPerfil(int id)
+    public IActionResult EditarPerfil(int id)
     {
-        var utilizador = await _utilizadorRepository.GetByIdAsync(id);
-
-        if (utilizador == null)
-            return NotFound();
-
-        var dto = new EditarPerfilDto
-        {
-            Nome = utilizador.Nome,
-            Email = utilizador.Email,
-            Telemovel = utilizador.Telemovel != null ? utilizador.Telemovel.ToString() : null
-        };
-
-        ViewBag.UtilizadorId = id;
-        return View(dto);
+        return RedirectToAction("Index", "Home", new { page = "edit_profile" });
     }
 
     [HttpPost]
@@ -79,7 +66,7 @@ public class UtilizadorController : Controller
         await HttpContext.SignInAsync("CookieAuth", principal);
 
         TempData["Sucesso"] = "Perfil atualizado com sucesso!";
-        return RedirectToAction("EditarPerfil", new { id });
+        return RedirectToAction("Index", "Home", new { page = "profile" });
     }
 
     [Authorize(Roles = "Admin")]
@@ -146,19 +133,8 @@ public class UtilizadorController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Detalhes()
+    public IActionResult Detalhes()
     {
-        var nomeLogado = User.Identity?.Name;
-
-        if (string.IsNullOrEmpty(nomeLogado))
-            return RedirectToAction("Index", "Login");
-
-        var utilizadores = await _utilizadorRepository.GetAllAsync();
-        var utilizador = utilizadores.FirstOrDefault(u => u.Nome == nomeLogado);
-
-        if (utilizador == null)
-            return NotFound();
-
-        return View(utilizador);
+        return RedirectToAction("Index", "Home", new { page = "profile" });
     }
 }

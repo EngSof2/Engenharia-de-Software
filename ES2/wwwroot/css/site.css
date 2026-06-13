@@ -413,7 +413,16 @@ label, .form-label {
 }
 
 .eh-account-page--profile {
-  --eh-account-bg: url("https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=2200&auto=format&fit=crop");
+  --eh-account-bg: url("/images/profile-account-bg.jpg");
+}
+
+.eh-account-page--edit-profile .eh-account-panel--wide {
+  width: min(100%, 68rem);
+}
+
+.eh-account-page--edit-profile .eh-account-form {
+  width: min(100%, 52rem);
+  margin: 0 auto;
 }
 
 .eh-account-shell {
@@ -1344,4 +1353,51 @@ button:not(:disabled),
   border-color: #fca5a5 !important;
   color: #fecaca !important;
   background-color: rgba(252, 165, 165, 0.1) !important;
+}
+
+.eh-account-page.eh-account-page--spa-profile {
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin-top: 0;
+  padding-top: clamp(6rem, 10vh, 8rem);
+  padding-bottom: clamp(3rem, 6vh, 5rem);
+  align-items: center;
+  isolation: isolate;
+  background: #202220;
+}
+
+.eh-account-page.eh-account-page--spa-profile::before,
+.eh-account-page.eh-account-page--spa-profile::after {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.eh-account-page.eh-account-page--spa-profile::after {
+  background:
+    radial-gradient(circle at 78% 22%, rgba(255, 204, 0, 0.1), transparent 24rem),
+    linear-gradient(120deg, rgba(51, 53, 51, 0.97) 0%, rgba(20, 21, 20, 0.91) 52%, rgba(51, 53, 51, 0.98) 100%);
+}
+
+.eh-account-page.eh-account-page--edit-profile .eh-account-form {
+  width: min(100%, 48rem);
+  margin: 1.75rem auto 0;
+}
+
+.eh-account-page.eh-account-page--edit-profile .eh-input-wrap .form-control {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 3rem;
+  padding-left: 3rem;
+  font-size: 1rem;
+}
+
+.eh-account-page.eh-account-page--edit-profile .eh-input-wrap {
+  width: 100%;
+}
+
+.eh-account-page.eh-account-page--edit-profile .eh-alert {
+  min-height: 4.55rem;
+  padding: 0.95rem 1.25rem;
+  line-height: 1.45;
 }

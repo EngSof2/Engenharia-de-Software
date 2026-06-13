@@ -18,6 +18,14 @@ public class RegraCapacidadeEvento : IRegraInscricaoEvento
         if (!capacidadeMaxima.HasValue)
             return null;
 
+        var jaOcupaLugar = await _context.RegistoEventos
+            .AnyAsync(r => r.IdUti == contexto.Utilizador.IdUti &&
+                           r.IdEvento == contexto.BilheteEvento.IdEvento &&
+                           !r.IsCancelado);
+
+        if (jaOcupaLugar)
+            return null;
+
         var inscritosAtivos = await _context.RegistoEventos
             .CountAsync(r => r.IdEvento == contexto.BilheteEvento.IdEvento && !r.IsCancelado);
 

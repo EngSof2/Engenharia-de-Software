@@ -2657,5 +2657,5 @@ C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\o
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\j6nf94ebif-{0}-x0me38srpl-x0me38srpl.gz
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\ouf2p4f10r-{0}-hf3azut2m3-hf3azut2m3.gz
 C:\Users\hugom\AppData\Local\Temp\es2-build-check\ClientApp\package-lock.json
-C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\9n5gn2q68p-{0}-ygdylve65p-ygdylve65p.gz
-C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-dyib8jmwor-dyib8jmwor.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-i3gjal86l8-i3gjal86l8.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\9n5gn2q68p-{0}-e2him773s2-e2him773s2.gz

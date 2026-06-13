@@ -121,6 +121,25 @@ using (var scope = app.Services.CreateScope())
             "NvPerm" = EXCLUDED."NvPerm";
         """);
 
+    if (!context.Utilizadores.Any(u => u.IdUti == 1))
+    {
+        var hasherSistema = new PasswordHasher<Utilizador>();
+        var utilizadorSistema = new Utilizador
+        {
+            IdUti = 1,
+            Nome = "Sistema",
+            Email = "sistema@es2.com",
+            TipoUti = 1
+        };
+        utilizadorSistema.Password = hasherSistema.HashPassword(utilizadorSistema, Guid.NewGuid().ToString("N"));
+
+        context.Database.ExecuteSqlInterpolated($"""
+            INSERT INTO "ES2"."Utilizadores" ("ID_Uti", "Nome", "Password", "Tipo_Uti", "Email")
+            OVERRIDING SYSTEM VALUE
+            VALUES ({utilizadorSistema.IdUti}, {utilizadorSistema.Nome}, {utilizadorSistema.Password}, {utilizadorSistema.TipoUti}, {utilizadorSistema.Email});
+            """);
+    }
+
     bool existeAdmin = context.Utilizadores.Any(u => u.TipoUti == 1);
 
     if (!existeAdmin)

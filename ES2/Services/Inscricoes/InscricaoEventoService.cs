@@ -14,15 +14,18 @@ public class InscricaoEventoService : IInscricaoEventoService
     private readonly AppDbContext _context;
     private readonly IEnumerable<IRegraInscricaoEvento> _regras;
     private readonly IConfiguradorBilhetesService _configurador;
+    private readonly ILogger<InscricaoEventoService> _logger;
 
     public InscricaoEventoService(
         AppDbContext context,
         IEnumerable<IRegraInscricaoEvento> regras,
-        IConfiguradorBilhetesService configurador)
+        IConfiguradorBilhetesService configurador,
+        ILogger<InscricaoEventoService> logger)
     {
         _context = context;
         _regras = regras;
         _configurador = configurador;
+        _logger = logger;
     }
 
     public async Task<ResultadoOperacaoInscricao> InscreverAsync(int bilheteEventoId, string nomeUtilizador)
@@ -86,6 +89,12 @@ public class InscricaoEventoService : IInscricaoEventoService
         var contexto = await CriarContextoAsync(dto.IdBilheteEvento, nomeUtilizador);
         if (contexto == null)
             return ResultadoOperacaoInscricao.Falha("Nao foi possivel identificar o utilizador ou o bilhete selecionado.");
+
+        if (dto.IdTipoPagamento is not int idTipoPagamento ||
+            !await _context.TipoPagamentos.AnyAsync(tp => tp.IdTipo == idTipoPagamento))
+        {
+            return ResultadoOperacaoInscricao.Falha("Escolhe um metodo de pagamento valido.");
+        }
 
         contexto.Utilizador.Email = dto.Email;
         contexto.Utilizador.Telemovel = dto.Telemovel;
@@ -268,7 +277,20 @@ public class InscricaoEventoService : IInscricaoEventoService
 
         try
         {
+            var bilheteAnterior = await _context.BilheteUtils
+                .Where(bu => bu.IdUtilizador == contexto.Utilizador.IdUti &&
+                             bu.IdBiEvNavigation != null &&
+                             bu.IdBiEvNavigation.IdEvento == contexto.BilheteEvento.IdEvento &&
+                             !bu.IdBiEvNavigation.IsCancelado &&
+                             !bu.IdBiEvNavigation.IdEventoNavigation.IsCancelado)
+                .OrderByDescending(bu => bu.IdBiUti)
+                .Select(bu => bu.IdBiEvNavigation)
+                .FirstOrDefaultAsync();
+
             contexto.BilheteEvento.QuantidadeDisponivel -= 1;
+
+            if (bilheteAnterior != null && bilheteAnterior.IdBiEv != contexto.BilheteEvento.IdBiEv)
+                bilheteAnterior.QuantidadeDisponivel += 1;
 
             var registoEvento = await _context.RegistoEventos
                 .FirstOrDefaultAsync(r => r.IdUti == contexto.Utilizador.IdUti &&
@@ -299,21 +321,19 @@ public class InscricaoEventoService : IInscricaoEventoService
             if (DaAcessoAtividades(contexto.BilheteEvento.IdBilheteNavigation.IdTipoNavigation?.Nome))
                 await GarantirRegistoAtividadesAsync(contexto);
 
-            await _context.SaveChangesAsync();
-
             if (checkout?.IdTipoPagamento is int idTipoPagamento)
             {
                 _context.Recibos.Add(new Recibo
                 {
                     IdUtilizador = contexto.Utilizador.IdUti,
-                    IdBiUti = bilheteUtil.IdBiUti,
+                    IdBiUtiNavigation = bilheteUtil,
                     ValorPago = contexto.BilheteEvento.Preco,
                     Data = DateOnly.FromDateTime(DateTime.Today),
                     IdTipoPag = idTipoPagamento
                 });
-
-                await _context.SaveChangesAsync();
             }
+
+            await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
 
@@ -323,9 +343,12 @@ public class InscricaoEventoService : IInscricaoEventoService
 
             return ResultadoOperacaoInscricao.Ok(mensagem);
         }
-        catch
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
+            _logger.LogError(ex, "Erro ao concluir compra/inscricao do bilhete {BilheteEventoId} para utilizador {UtilizadorId}.",
+                contexto.BilheteEvento.IdBiEv,
+                contexto.Utilizador.IdUti);
             return ResultadoOperacaoInscricao.Falha("Ocorreu um erro ao tentar concluir a operacao.");
         }
     }

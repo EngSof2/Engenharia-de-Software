@@ -1,4 +1,5 @@
 using ES2.Data;
+using ES2.DTOs;
 using ES2.Models;
 using ES2.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
@@ -65,6 +66,69 @@ public class AuthApiController : ControllerBase
                 3 => "Organizador",
                 _ => "Utilizador"
             }
+        });
+    }
+
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMe([FromBody] EditarPerfilDto dto)
+    {
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Utilizador? utilizador = null;
+
+        if (int.TryParse(userId, out var id))
+            utilizador = await _context.Utilizadores.FirstOrDefaultAsync(u => u.IdUti == id);
+
+        utilizador ??= await _context.Utilizadores.FirstOrDefaultAsync(u => u.Nome == User.Identity!.Name);
+
+        if (utilizador == null)
+            return NotFound(new { message = "Utilizador nao encontrado." });
+
+        if (!string.IsNullOrWhiteSpace(dto.Email))
+        {
+            var emailEmUso = await _context.Utilizadores
+                .AnyAsync(u => u.Email == dto.Email && u.IdUti != utilizador.IdUti);
+
+            if (emailEmUso)
+                return Conflict(new { message = "Este email ja esta a ser utilizado." });
+        }
+
+        utilizador.Nome = dto.Nome;
+        utilizador.Email = dto.Email;
+        utilizador.Telemovel = string.IsNullOrWhiteSpace(dto.Telemovel) ? null : dto.Telemovel;
+
+        await _context.SaveChangesAsync();
+
+        var role = utilizador.TipoUti switch
+        {
+            1 => "Admin",
+            3 => "Organizador",
+            _ => "Utilizador"
+        };
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, utilizador.Nome),
+            new(ClaimTypes.Email, utilizador.Email ?? ""),
+            new(ClaimTypes.NameIdentifier, utilizador.IdUti.ToString()),
+            new(ClaimTypes.Role, role)
+        };
+
+        var identity = new ClaimsIdentity(claims, "CookieAuth");
+        await HttpContext.SignInAsync("CookieAuth", new ClaimsPrincipal(identity));
+
+        return Ok(new
+        {
+            id = utilizador.IdUti,
+            userName = utilizador.Nome,
+            nome = utilizador.Nome,
+            email = utilizador.Email,
+            telemovel = utilizador.Telemovel,
+            tipoUti = utilizador.TipoUti,
+            perfil = role
         });
     }
 
