@@ -17,6 +17,8 @@ public partial class Atividade
 
     public int IdCategoria { get; set; }
 
+    public bool IsCancelado { get; set; }
+
     public virtual ICollection<FeedbackAtv> FeedbackAtvs { get; set; } = new List<FeedbackAtv>();
 
     public virtual Categoria IdCategoriaNavigation { get; set; } = null!;

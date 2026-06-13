@@ -31,7 +31,8 @@ public class AuthApiController : ControllerBase
         {
             isAuthenticated,
             userName = isAuthenticated ? User.Identity!.Name : null,
-            isAdmin = isAuthenticated && User.IsInRole("Admin")
+            isAdmin = isAuthenticated && User.IsInRole("Admin"),
+            isOrganizer = isAuthenticated && User.IsInRole("Organizador")
         });
     }
 

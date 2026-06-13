@@ -25,6 +25,8 @@ public partial class Evento
 
     public TimeOnly? HoraFim { get; set; }
 
+    public bool IsCancelado { get; set; }
+
     public virtual ICollection<Atividade> Atividades { get; set; } = new List<Atividade>();
 
     public virtual ICollection<BilhetesEvento> BilhetesEventos { get; set; } = new List<BilhetesEvento>();

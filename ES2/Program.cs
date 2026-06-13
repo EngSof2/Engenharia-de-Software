@@ -11,6 +11,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Configura o sistema de autenticação por Cookies
 builder.Services.AddAuthentication("CookieAuth")
     .AddCookie("CookieAuth", config =>
@@ -85,6 +89,38 @@ using (var scope = app.Services.CreateScope())
         ADD COLUMN IF NOT EXISTS "Classificacao" integer NOT NULL DEFAULT 0;
         """);
 
+    context.Database.ExecuteSqlRaw("""
+        ALTER TABLE "ES2"."Evento"
+        ADD COLUMN IF NOT EXISTS "ID_Organizador" integer NULL;
+        """);
+
+    context.Database.ExecuteSqlRaw("""
+        ALTER TABLE "ES2"."Evento"
+        ADD COLUMN IF NOT EXISTS "isCancelado" boolean NOT NULL DEFAULT false;
+        """);
+
+    context.Database.ExecuteSqlRaw("""
+        ALTER TABLE "ES2"."Atividades"
+        ADD COLUMN IF NOT EXISTS "isCancelado" boolean NOT NULL DEFAULT false;
+        """);
+
+    context.Database.ExecuteSqlRaw("""
+        ALTER TABLE "ES2"."Bilhetes_Eventos"
+        ADD COLUMN IF NOT EXISTS "isCancelado" boolean NOT NULL DEFAULT false;
+        """);
+
+    context.Database.ExecuteSqlRaw("""
+        INSERT INTO "ES2"."Tipo_Utilizador" ("ID_tpUti", "Nome", "NvPerm")
+        OVERRIDING SYSTEM VALUE
+        VALUES
+            (1, 'Admin', 1),
+            (2, 'Utilizador', 0),
+            (3, 'Organizador', 2)
+        ON CONFLICT ("ID_tpUti") DO UPDATE
+        SET "Nome" = EXCLUDED."Nome",
+            "NvPerm" = EXCLUDED."NvPerm";
+        """);
+
     bool existeAdmin = context.Utilizadores.Any(u => u.TipoUti == 1);
 
     if (!existeAdmin)
@@ -103,7 +139,10 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 
-    var idsEventos = context.Eventos.Select(e => e.IdEvento).ToList();
+    var idsEventos = context.Eventos
+        .Where(e => !e.IsCancelado)
+        .Select(e => e.IdEvento)
+        .ToList();
     foreach (var idEvento in idsEventos)
     {
         await configuradorBilhetes.GarantirEObterOfertasAsync(idEvento);

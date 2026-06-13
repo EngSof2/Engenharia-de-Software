@@ -91,6 +91,7 @@ public class EventosApiController : ControllerBase
 
         var eventos = await _context.Eventos
             .Include(e => e.IdCategoriaNavigation)
+            .Where(e => !e.IsCancelado)
             .OrderBy(e => e.Data)
             .ThenBy(e => e.HoraInicio)
             .Select(e => new
@@ -102,6 +103,92 @@ public class EventosApiController : ControllerBase
                 local = e.Local,
                 descricao = e.Descricao,
                 capacidadeMax = e.CapMax,
+                cancelado = e.IsCancelado,
+                categoria = e.IdCategoriaNavigation != null ? new { id = e.IdCategoriaNavigation.IdCategoria, nome = e.IdCategoriaNavigation.Nome } : null,
+                imageUrl = imageUrls.ContainsKey(e.IdEvento) ? imageUrls[e.IdEvento] : null
+            })
+            .ToListAsync(ct);
+
+        return Ok(eventos);
+    }
+
+    [Authorize]
+    [HttpGet("inscritos")]
+    public async Task<IActionResult> ListarInscritos(CancellationToken ct)
+    {
+        var nomeUtilizador = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(nomeUtilizador))
+            return Unauthorized();
+
+        var utilizador = await _context.Utilizadores
+            .FirstOrDefaultAsync(u => u.Nome == nomeUtilizador, ct);
+
+        if (utilizador == null)
+            return Unauthorized();
+
+        var imageCol = await TryGetEventoImageUrlColumnAsync(ct);
+        var imageUrls = await LoadImageUrlsAsync(imageCol, ct);
+
+        var eventos = await _context.Eventos
+            .Where(e => !e.IsCancelado && e.RegistoEventos.Any(r => r.IdUti == utilizador.IdUti && !r.IsCancelado))
+            .Distinct()
+            .OrderBy(e => e.Data)
+            .ThenBy(e => e.HoraInicio)
+            .Select(e => new
+            {
+                id = e.IdEvento,
+                nome = e.Nome,
+                data = e.Data != null ? e.Data.Value.ToString("yyyy-MM-dd") : null,
+                horaInicio = e.HoraInicio != null ? e.HoraInicio.Value.ToString("HH:mm") : null,
+                local = e.Local,
+                descricao = e.Descricao,
+                capacidadeMax = e.CapMax,
+                cancelado = e.IsCancelado,
+                categoria = e.IdCategoriaNavigation != null ? new { id = e.IdCategoriaNavigation.IdCategoria, nome = e.IdCategoriaNavigation.Nome } : null,
+                imageUrl = imageUrls.ContainsKey(e.IdEvento) ? imageUrls[e.IdEvento] : null
+            })
+            .ToListAsync(ct);
+
+        return Ok(eventos);
+    }
+
+    [Authorize(Roles = "Organizador")]
+    [HttpGet("criados")]
+    public async Task<IActionResult> ListarCriados([FromQuery] bool incluirCancelados = false, CancellationToken ct = default)
+    {
+        var nomeUtilizador = User.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(nomeUtilizador))
+            return Unauthorized();
+
+        var utilizador = await _context.Utilizadores
+            .FirstOrDefaultAsync(u => u.Nome == nomeUtilizador, ct);
+
+        if (utilizador == null)
+            return Unauthorized();
+
+        var imageCol = await TryGetEventoImageUrlColumnAsync(ct);
+        var imageUrls = await LoadImageUrlsAsync(imageCol, ct);
+
+        var query = _context.Eventos
+            .Include(e => e.IdCategoriaNavigation)
+            .Where(e => e.IdOrganizador == utilizador.IdUti);
+
+        if (!incluirCancelados)
+            query = query.Where(e => !e.IsCancelado);
+
+        var eventos = await query
+            .OrderBy(e => e.Data)
+            .ThenBy(e => e.HoraInicio)
+            .Select(e => new
+            {
+                id = e.IdEvento,
+                nome = e.Nome,
+                data = e.Data != null ? e.Data.Value.ToString("yyyy-MM-dd") : null,
+                horaInicio = e.HoraInicio != null ? e.HoraInicio.Value.ToString("HH:mm") : null,
+                local = e.Local,
+                descricao = e.Descricao,
+                capacidadeMax = e.CapMax,
+                cancelado = e.IsCancelado,
                 categoria = e.IdCategoriaNavigation != null ? new { id = e.IdCategoriaNavigation.IdCategoria, nome = e.IdCategoriaNavigation.Nome } : null,
                 imageUrl = imageUrls.ContainsKey(e.IdEvento) ? imageUrls[e.IdEvento] : null
             })
@@ -122,28 +209,73 @@ public class EventosApiController : ControllerBase
             .Select(e => new
             {
                 id = e.IdEvento,
+                idOrganizador = e.IdOrganizador,
                 nome = e.Nome,
                 data = e.Data != null ? e.Data.Value.ToString("yyyy-MM-dd") : null,
                 horaInicio = e.HoraInicio != null ? e.HoraInicio.Value.ToString("HH:mm") : null,
                 local = e.Local,
                 descricao = e.Descricao,
                 capacidadeMax = e.CapMax,
+                cancelado = e.IsCancelado,
                 categoria = e.IdCategoriaNavigation != null ? new { id = e.IdCategoriaNavigation.IdCategoria, nome = e.IdCategoriaNavigation.Nome } : null,
                 imageUrl = imageUrls.ContainsKey(e.IdEvento) ? imageUrls[e.IdEvento] : null
             })
             .FirstOrDefaultAsync(ct);
 
-        return evento == null ? NotFound() : Ok(evento);
+        if (evento == null)
+            return NotFound();
+
+        var podeGerirAtividades = false;
+        var eOrganizadorDoEvento = false;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            if (User.IsInRole("Admin"))
+            {
+                podeGerirAtividades = true;
+            }
+            else if (User.IsInRole("Organizador"))
+            {
+                var nomeUtilizador = User.Identity?.Name;
+                var utilizador = string.IsNullOrWhiteSpace(nomeUtilizador)
+                    ? null
+                    : await _context.Utilizadores
+                        .FirstOrDefaultAsync(u => u.Nome == nomeUtilizador, ct);
+
+                eOrganizadorDoEvento = utilizador != null && evento.idOrganizador == utilizador.IdUti;
+                podeGerirAtividades = eOrganizadorDoEvento;
+            }
+        }
+
+        return Ok(new
+        {
+            evento.id,
+            evento.idOrganizador,
+            evento.nome,
+            evento.data,
+            evento.horaInicio,
+            evento.local,
+            evento.descricao,
+            evento.capacidadeMax,
+            evento.cancelado,
+            evento.categoria,
+            evento.imageUrl,
+            podeGerirAtividades,
+            eOrganizadorDoEvento
+        });
     }
 
     [HttpGet("{id:int}/bilhetes")]
     public async Task<IActionResult> ListarBilhetes(int id)
     {
-        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id);
+        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id && !e.IsCancelado);
         if (!existeEvento)
             return NotFound();
 
         var ofertas = await _configuradorBilhetes.GarantirEObterOfertasAsync(id);
+        var idsBilhetesAtivos = await _context.BilhetesEventos
+            .Where(be => be.IdEvento == id && !be.IsCancelado)
+            .Select(be => be.IdBiEv)
+            .ToListAsync();
         var jaInscrito = (await _inscricaoEventoService.ObterEventosInscritosAsync(User.Identity?.Name)).Contains(id);
         var idBilheteAtivo = await _inscricaoEventoService.ObterBilheteAtivoDoEventoAsync(id, User.Identity?.Name);
 
@@ -151,7 +283,7 @@ public class EventosApiController : ControllerBase
         {
             jaInscrito,
             idBilheteAtivo,
-            ofertas = ofertas.Select(o => new
+            ofertas = ofertas.Where(o => idsBilhetesAtivos.Contains(o.IdBilheteEvento)).Select(o => new
             {
                 idBilheteEvento = o.IdBilheteEvento,
                 nomeBilhete = o.NomeBilhete,
@@ -169,8 +301,10 @@ public class EventosApiController : ControllerBase
     [HttpGet("{id:int}/avaliacoes")]
     public async Task<IActionResult> ListarAvaliacoes(int id, CancellationToken ct)
     {
-        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id, ct);
-        if (!existeEvento)
+        var evento = await _context.Eventos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.IdEvento == id, ct);
+        if (evento == null)
             return NotFound();
 
         var feedbacks = await _feedbackEvntRepository.GetByEventoComUtilizadorAsync(id);
@@ -182,6 +316,10 @@ public class EventosApiController : ControllerBase
         var autenticado = !string.IsNullOrWhiteSpace(nome);
         var jaInscrito = autenticado &&
                          (await _inscricaoEventoService.ObterEventosInscritosAsync(nome)).Contains(id);
+        var utilizador = autenticado
+            ? await _context.Utilizadores.AsNoTracking().FirstOrDefaultAsync(u => u.Nome == nome, ct)
+            : null;
+        var eOrganizadorDoEvento = utilizador != null && User.IsInRole("Organizador") && evento.IdOrganizador == utilizador.IdUti;
 
         return Ok(new
         {
@@ -189,6 +327,7 @@ public class EventosApiController : ControllerBase
             total = feedbacks.Count,
             autenticado,
             jaInscrito,
+            eOrganizadorDoEvento,
             avaliacoes = feedbacks.Select(f => new
             {
                 autor = f.IdUtiNavigation != null ? f.IdUtiNavigation.Nome : "Utilizador",
@@ -209,8 +348,8 @@ public class EventosApiController : ControllerBase
     [HttpPost("{id:int}/avaliacoes")]
     public async Task<IActionResult> AdicionarAvaliacao(int id, [FromBody] CriarAvaliacaoRequest req, CancellationToken ct)
     {
-        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id, ct);
-        if (!existeEvento)
+        var evento = await _context.Eventos.AsNoTracking().FirstOrDefaultAsync(e => e.IdEvento == id, ct);
+        if (evento == null)
             return NotFound(new { message = "O evento selecionado nao existe." });
 
         var nome = User.Identity?.Name;
@@ -220,6 +359,9 @@ public class EventosApiController : ControllerBase
 
         if (utilizador == null)
             return BadRequest(new { message = "Nao foi possivel identificar o utilizador autenticado." });
+
+        if (User.IsInRole("Organizador") && evento.IdOrganizador == utilizador.IdUti)
+            return BadRequest(new { message = "Organizadores nao podem avaliar os seus proprios eventos." });
 
         var inscrito = (await _inscricaoEventoService.ObterEventosInscritosAsync(nome)).Contains(id);
         if (!inscrito)
@@ -246,6 +388,11 @@ public class EventosApiController : ControllerBase
     [HttpGet("{id:int}/atividades")]
     public async Task<IActionResult> ListarAtividades(int id, CancellationToken ct)
     {
+        var eventoCancelado = await _context.Eventos
+            .AnyAsync(e => e.IdEvento == id && e.IsCancelado, ct);
+        if (eventoCancelado)
+            return Ok(Array.Empty<object>());
+
         var nomeUtilizador = User.Identity?.Name;
         var utilizador = string.IsNullOrWhiteSpace(nomeUtilizador)
             ? null
@@ -272,7 +419,7 @@ public class EventosApiController : ControllerBase
 
         var atividades = await _context.Atividades
             .Include(a => a.IdCategoriaNavigation)
-            .Where(a => a.IdEvento == id)
+            .Where(a => a.IdEvento == id && !a.IsCancelado)
             .OrderBy(a => a.Nome)
             .Select((a) => new
             {
@@ -309,6 +456,36 @@ public class EventosApiController : ControllerBase
             : BadRequest(new { message = resultado.Mensagem });
     }
 
+    [Authorize(Roles = "Admin,Organizador")]
+    [HttpDelete("{id:int}/atividades/{atividadeId:int}")]
+    public async Task<IActionResult> CancelarAtividade(int id, int atividadeId, CancellationToken ct)
+    {
+        var atividade = await _context.Atividades
+            .Include(a => a.IdEventoNavigation)
+            .FirstOrDefaultAsync(a => a.IdAtividade == atividadeId && a.IdEvento == id, ct);
+
+        if (atividade == null)
+            return NotFound(new { message = "A atividade selecionada nao existe." });
+
+        if (!await TemPermissaoEditarEventoAsync(atividade.IdEventoNavigation, ct))
+            return Forbid("Nao tens permissao para cancelar esta atividade.");
+
+        if (atividade.IsCancelado)
+            return Ok(new { message = "A atividade ja estava cancelada." });
+
+        atividade.IsCancelado = true;
+
+        var registos = await _context.RegistoAtividades
+            .Where(r => r.IdAtividade == atividadeId && !r.IsCancelado)
+            .ToListAsync(ct);
+
+        foreach (var registo in registos)
+            registo.IsCancelado = true;
+
+        await _context.SaveChangesAsync(ct);
+        return Ok(new { message = "Atividade cancelada com sucesso." });
+    }
+
     public sealed class CriarAtividadeRequest
     {
         public string Nome { get; set; } = string.Empty;
@@ -318,13 +495,19 @@ public class EventosApiController : ControllerBase
         public string? NovaCategoriaNome { get; set; }
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Organizador")]
     [HttpPost("{id:int}/atividades")]
     public async Task<IActionResult> CriarAtividade(int id, [FromBody] CriarAtividadeRequest req, CancellationToken ct)
     {
-        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id, ct);
-        if (!existeEvento)
+        var evento = await _context.Eventos.FirstOrDefaultAsync(e => e.IdEvento == id, ct);
+        if (evento == null)
             return NotFound(new { message = "O evento selecionado nao existe." });
+
+        if (evento.IsCancelado)
+            return BadRequest(new { message = "Nao e possivel adicionar atividades a um evento cancelado." });
+
+        if (!await TemPermissaoEditarEventoAsync(evento, ct))
+            return Forbid("Nao tens permissao para adicionar atividades a este evento.");
 
         if (string.IsNullOrWhiteSpace(req.Nome))
             return BadRequest(new { message = "O nome da atividade e obrigatorio." });
@@ -441,15 +624,19 @@ public class EventosApiController : ControllerBase
         if (req.Preco is null or < 0)
             return BadRequest("Preco invalido.");
 
-        if (req.QuantidadeStandard is null or < 0 ||
-            req.QuantidadeGold is null or < 0 ||
-            req.QuantidadeVip is null or < 0)
+        var quantidadeStandard = req.QuantidadeStandard ?? req.Capacidade.Value;
+        var quantidadeGold = req.QuantidadeGold ?? 0;
+        var quantidadeVip = req.QuantidadeVip ?? 0;
+
+        if (quantidadeStandard < 0 ||
+            quantidadeGold < 0 ||
+            quantidadeVip < 0)
             return BadRequest("As quantidades de bilhetes sao obrigatorias e nao podem ser negativas.");
 
-        if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip > req.Capacidade)
+        if (quantidadeStandard + quantidadeGold + quantidadeVip > req.Capacidade.Value)
             return BadRequest("A soma dos bilhetes Standard, Gold e VIP nao pode ultrapassar a capacidade maxima do evento.");
 
-        if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip <= 0)
+        if (quantidadeStandard + quantidadeGold + quantidadeVip <= 0)
             return BadRequest("Deves disponibilizar pelo menos um bilhete.");
 
         var nomeUtilizador = User.Identity?.Name;
@@ -525,9 +712,9 @@ public class EventosApiController : ControllerBase
             await _configuradorBilhetes.ConfigurarBilhetesEventoAsync(
                 evento.IdEvento,
                 req.Preco.Value,
-                req.QuantidadeStandard.Value,
-                req.QuantidadeGold.Value,
-                req.QuantidadeVip.Value);
+                quantidadeStandard,
+                quantidadeGold,
+                quantidadeVip);
             await tx.CommitAsync(ct);
             return Ok(new { id = evento.IdEvento });
         }
@@ -570,19 +757,27 @@ public class EventosApiController : ControllerBase
         if (req.Capacidade is null or <= 0)
             return BadRequest("Capacidade invalida.");
 
-        if (req.Preco is null or < 0)
-            return BadRequest("Preco invalido.");
+        var deveAtualizarBilhetes = req.Preco.HasValue ||
+                                     req.QuantidadeStandard.HasValue ||
+                                     req.QuantidadeGold.HasValue ||
+                                     req.QuantidadeVip.HasValue;
 
-        if (req.QuantidadeStandard is null or < 0 ||
-            req.QuantidadeGold is null or < 0 ||
-            req.QuantidadeVip is null or < 0)
-            return BadRequest("As quantidades de bilhetes sao obrigatorias e nao podem ser negativas.");
+        if (deveAtualizarBilhetes)
+        {
+            if (req.Preco is null or < 0)
+                return BadRequest("Preco invalido.");
 
-        if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip > req.Capacidade)
-            return BadRequest("A soma dos bilhetes Standard, Gold e VIP nao pode ultrapassar a capacidade maxima do evento.");
+            if (req.QuantidadeStandard is null or < 0 ||
+                req.QuantidadeGold is null or < 0 ||
+                req.QuantidadeVip is null or < 0)
+                return BadRequest("As quantidades de bilhetes sao obrigatorias e nao podem ser negativas.");
 
-        if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip <= 0)
-            return BadRequest("Deves disponibilizar pelo menos um bilhete.");
+            if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip > req.Capacidade)
+                return BadRequest("A soma dos bilhetes Standard, Gold e VIP nao pode ultrapassar a capacidade maxima do evento.");
+
+            if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip <= 0)
+                return BadRequest("Deves disponibilizar pelo menos um bilhete.");
+        }
 
         evento.Nome = req.Nome.Trim();
         evento.Data = data;
@@ -624,12 +819,15 @@ public class EventosApiController : ControllerBase
             }
         }
 
-        await _configuradorBilhetes.ConfigurarBilhetesEventoAsync(
-            evento.IdEvento,
-            req.Preco.Value,
-            req.QuantidadeStandard.Value,
-            req.QuantidadeGold.Value,
-            req.QuantidadeVip.Value);
+        if (deveAtualizarBilhetes)
+        {
+            await _configuradorBilhetes.ConfigurarBilhetesEventoAsync(
+                evento.IdEvento,
+                req.Preco!.Value,
+                req.QuantidadeStandard!.Value,
+                req.QuantidadeGold!.Value,
+                req.QuantidadeVip!.Value);
+        }
 
         return Ok("Evento editado com sucesso.");
     }
@@ -650,38 +848,47 @@ public class EventosApiController : ControllerBase
         if (!await TemPermissaoEditarEventoAsync(evento, ct))
             return Forbid("Nao tens permissao para eliminar este evento.");
 
+        if (evento.IsCancelado)
+            return Ok("Evento ja estava cancelado.");
+
         await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
         try
         {
+            evento.IsCancelado = true;
+
             var atividadesIds = evento.Atividades.Select(a => a.IdAtividade).ToList();
             var registoAtividades = await _context.RegistoAtividades
                 .Where(r => atividadesIds.Contains(r.IdAtividade))
                 .ToListAsync(ct);
-            _context.RegistoAtividades.RemoveRange(registoAtividades);
 
-            _context.Atividades.RemoveRange(evento.Atividades);
+            foreach (var registoAtividade in registoAtividades)
+                registoAtividade.IsCancelado = true;
 
-            _context.RegistoEventos.RemoveRange(evento.RegistoEventos);
+            foreach (var atividade in evento.Atividades)
+                atividade.IsCancelado = true;
+
+            foreach (var registoEvento in evento.RegistoEventos)
+                registoEvento.IsCancelado = true;
 
             var bilheteUtils = await _context.BilheteUtils
                 .Where(bu => evento.BilhetesEventos.Select(be => be.IdBiEv).Contains(bu.IdBiEv.Value))
                 .ToListAsync(ct);
+
             _context.BilheteUtils.RemoveRange(bilheteUtils);
 
-            _context.BilhetesEventos.RemoveRange(evento.BilhetesEventos);
-
-            _context.Eventos.Remove(evento);
+            foreach (var bilheteEvento in evento.BilhetesEventos)
+                bilheteEvento.IsCancelado = true;
 
             await _context.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
 
-            return Ok("Evento eliminado com sucesso.");
+            return Ok("Evento cancelado com sucesso.");
         }
         catch
         {
             await tx.RollbackAsync(ct);
-            return Problem("Nao foi possivel eliminar o evento.");
+            return Problem("Nao foi possivel cancelar o evento.");
         }
     }
 
@@ -725,9 +932,10 @@ public class EventosApiController : ControllerBase
             return (false, "As atividades ja estao incluidas automaticamente no teu bilhete Gold/VIP.");
 
         var atividade = await _context.Atividades
+            .Include(a => a.IdEventoNavigation)
             .FirstOrDefaultAsync(a => a.IdAtividade == atividadeId && a.IdEvento == eventoId, ct);
 
-        if (atividade == null)
+        if (atividade == null || atividade.IsCancelado || atividade.IdEventoNavigation.IsCancelado)
             return (false, "A atividade selecionada nao existe.");
 
         var registo = await _context.RegistoAtividades
@@ -796,7 +1004,7 @@ public class EventosApiController : ControllerBase
     private async Task GarantirRegistoAtividadesAsync(int utilizadorId, int eventoId, CancellationToken ct)
     {
         var atividades = await _context.Atividades
-            .Where(a => a.IdEvento == eventoId)
+            .Where(a => a.IdEvento == eventoId && !a.IsCancelado && !a.IdEventoNavigation.IsCancelado)
             .Select(a => a.IdAtividade)
             .ToListAsync(ct);
 

@@ -1695,7 +1695,6 @@ C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\o
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\scopedcss\bundle\ES2.styles.css
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\scopedcss\projectbundle\ES2.bundle.scp.css
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\6zx2278uup-{0}-eu89vnttjn-eu89vnttjn.gz
-C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\ouf2p4f10r-{0}-640qgcgvzf-640qgcgvzf.gz
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\b14idqt2en-{0}-22uszb3tg3-22uszb3tg3.gz
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\g4y6wldwwy-{0}-v5grk737o8-v5grk737o8.gz
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\nuhenmf77z-{0}-bqjiyaj88i-bqjiyaj88i.gz
@@ -1826,7 +1825,6 @@ C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\build
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\build-check-codex\ES2.pdb
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\yv9qbu4bty-{0}-d14uoqbb84-d14uoqbb84.gz
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\rouggsg2fw-{0}-d14uoqbb84-d14uoqbb84.gz
-C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\9n5gn2q68p-{0}-96z26l2m7f-96z26l2m7f.gz
 C:\Users\vasco\Engenharia-de-Software\ES2\bin\Debug\net10.0\BuildHost-net472\Microsoft.Build.Locator.dll
 C:\Users\vasco\Engenharia-de-Software\ES2\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe
 C:\Users\vasco\Engenharia-de-Software\ES2\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
@@ -2139,7 +2137,6 @@ C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\b
 C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\bin\Debug\net10.0\ClientApp\tsconfig.json
 C:\Users\hugom\AppData\Local\Temp\es2-build-check\ClientApp\package.json
 C:\Users\hugom\AppData\Local\Temp\es2-build-check\ClientApp\tsconfig.json
-C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-sfjod6o46r-sfjod6o46r.gz
 C:\Users\Utilizador\Documents\GitHub\es2\Engenharia-de-Software-master\Engenharia-de-Software\ES2\bin\Debug\net10.0\BuildHost-net472\Microsoft.Build.Locator.dll
 C:\Users\Utilizador\Documents\GitHub\es2\Engenharia-de-Software-master\Engenharia-de-Software\ES2\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe
 C:\Users\Utilizador\Documents\GitHub\es2\Engenharia-de-Software-master\Engenharia-de-Software\ES2\bin\Debug\net10.0\BuildHost-net472\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
@@ -2653,3 +2650,12 @@ C:\Users\Daniel\Desktop\Aulas\2-ANO\2-Semestre\ES2\TrabalhoPratico\GestaoEventos
 C:\Users\Daniel\Desktop\Aulas\2-ANO\2-Semestre\ES2\TrabalhoPratico\GestaoEventos\ES2\obj\Debug\net10.0\compressed\r7qse5enrq-{0}-zwwo61ygl0-zwwo61ygl0.gz
 C:\Users\Daniel\Desktop\Aulas\2-ANO\2-Semestre\ES2\TrabalhoPratico\GestaoEventos\ES2\obj\Debug\net10.0\compressed\j6nf94ebif-{0}-y06a7n7cqm-y06a7n7cqm.gz
 C:\Users\Daniel\Desktop\Aulas\2-ANO\2-Semestre\ES2\TrabalhoPratico\GestaoEventos\ES2\obj\Debug\net10.0\compressed\ouf2p4f10r-{0}-hf3azut2m3-hf3azut2m3.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\bin\Debug\net10.0\ClientApp\package-lock.json
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\ehsk7w9erb-{0}-ra7ztlyjzv-ra7ztlyjzv.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\r7qse5enrq-{0}-r5gylscta8-r5gylscta8.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\42k94vhi1w-{0}-szf1lqcbdo-szf1lqcbdo.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\j6nf94ebif-{0}-x0me38srpl-x0me38srpl.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\ouf2p4f10r-{0}-hf3azut2m3-hf3azut2m3.gz
+C:\Users\hugom\AppData\Local\Temp\es2-build-check\ClientApp\package-lock.json
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\9n5gn2q68p-{0}-ygdylve65p-ygdylve65p.gz
+C:\Users\hugom\RiderProjects\Engenharia-de-Software\Engenharia-de-Software\ES2\obj\Debug\net10.0\compressed\hzixc46zys-{0}-dyib8jmwor-dyib8jmwor.gz

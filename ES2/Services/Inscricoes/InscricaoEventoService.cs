@@ -44,7 +44,7 @@ public class InscricaoEventoService : IInscricaoEventoService
             .Include(be => be.IdEventoNavigation)
             .Include(be => be.IdBilheteNavigation)
             .ThenInclude(b => b.IdTipoNavigation)
-            .FirstOrDefaultAsync(be => be.IdBiEv == bilheteEventoId);
+            .FirstOrDefaultAsync(be => be.IdBiEv == bilheteEventoId && !be.IsCancelado && !be.IdEventoNavigation.IsCancelado);
 
         if (bilheteEvento == null)
             return null;
@@ -103,7 +103,7 @@ public class InscricaoEventoService : IInscricaoEventoService
         var bilheteEvento = await _context.BilhetesEventos
             .Include(be => be.IdEventoNavigation)
             .ThenInclude(e => e.Atividades)
-            .FirstOrDefaultAsync(be => be.IdBiEv == bilheteEventoId);
+            .FirstOrDefaultAsync(be => be.IdBiEv == bilheteEventoId && !be.IsCancelado && !be.IdEventoNavigation.IsCancelado);
 
         if (bilheteEvento == null)
             return ResultadoOperacaoInscricao.Falha("O bilhete selecionado nao existe.");
@@ -187,7 +187,9 @@ public class InscricaoEventoService : IInscricaoEventoService
         return await _context.BilheteUtils
             .Where(bu => bu.IdUtilizador == utilizador.IdUti &&
                          bu.IdBiEvNavigation != null &&
-                         bu.IdBiEvNavigation.IdEvento == eventoId)
+                         bu.IdBiEvNavigation.IdEvento == eventoId &&
+                         !bu.IdBiEvNavigation.IsCancelado &&
+                         !bu.IdBiEvNavigation.IdEventoNavigation.IsCancelado)
             .OrderByDescending(bu => bu.IdBiUti)
             .Select(bu => bu.IdBiEv)
             .FirstOrDefaultAsync();
@@ -238,9 +240,12 @@ public class InscricaoEventoService : IInscricaoEventoService
             .ThenInclude(e => e.Atividades)
             .Include(be => be.IdBilheteNavigation)
             .ThenInclude(b => b.IdTipoNavigation)
-            .FirstOrDefaultAsync(be => be.IdBiEv == bilheteEventoId);
+            .FirstOrDefaultAsync(be => be.IdBiEv == bilheteEventoId && !be.IsCancelado && !be.IdEventoNavigation.IsCancelado);
 
         if (bilheteEvento == null)
+            return null;
+
+        if (bilheteEvento.IsCancelado || bilheteEvento.IdEventoNavigation.IsCancelado)
             return null;
 
         return new InscricaoEventoContexto
@@ -327,7 +332,7 @@ public class InscricaoEventoService : IInscricaoEventoService
 
     private async Task GarantirRegistoAtividadesAsync(InscricaoEventoContexto contexto)
     {
-        foreach (var atividade in contexto.BilheteEvento.IdEventoNavigation.Atividades)
+        foreach (var atividade in contexto.BilheteEvento.IdEventoNavigation.Atividades.Where(a => !a.IsCancelado))
         {
             var registoAtividade = await _context.RegistoAtividades
                 .FirstOrDefaultAsync(r => r.IdUti == contexto.Utilizador.IdUti && r.IdAtividade == atividade.IdAtividade);

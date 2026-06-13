@@ -15,6 +15,8 @@ public partial class BilhetesEvento
 
     public int QuantidadeDisponivel { get; set; }
 
+    public bool IsCancelado { get; set; }
+
     public virtual ICollection<BilheteUtil> BilheteUtils { get; set; } = new List<BilheteUtil>();
 
     public virtual Bilhete IdBilheteNavigation { get; set; } = null!;

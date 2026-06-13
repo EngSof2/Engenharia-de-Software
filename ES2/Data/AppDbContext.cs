@@ -54,7 +54,7 @@ public partial class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=ES2;Username=postgres;Password=123");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=ES2;Username=postgres;Password=1234");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,6 +69,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("ID_Atividade");
             entity.Property(e => e.IdCategoria).HasColumnName("ID_Categoria");
             entity.Property(e => e.IdEvento).HasColumnName("ID_Evento");
+            entity.Property(e => e.IsCancelado).HasColumnName("isCancelado");
             entity.Property(e => e.Local).HasMaxLength(100);
             entity.Property(e => e.Nome).HasMaxLength(100);
 
@@ -132,6 +133,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("ID_BiEv");
             entity.Property(e => e.IdBilhete).HasColumnName("ID_Bilhete");
             entity.Property(e => e.IdEvento).HasColumnName("ID_Evento");
+            entity.Property(e => e.IsCancelado).HasColumnName("isCancelado");
             entity.Property(e => e.QuantidadeDisponivel).HasColumnName("QuantidadeDisponivel");
 
             entity.HasOne(d => d.IdBilheteNavigation).WithMany(p => p.BilhetesEventos)
@@ -206,6 +208,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.HoraInicio).HasColumnName("hora_inicio");
             entity.Property(e => e.IdCategoria).HasColumnName("ID_Categoria");
             entity.Property(e => e.IdOrganizador).HasColumnName("ID_Organizador");
+            entity.Property(e => e.IsCancelado).HasColumnName("isCancelado");
             entity.Property(e => e.Local).HasMaxLength(50);
             entity.Property(e => e.Nome).HasMaxLength(100);
 

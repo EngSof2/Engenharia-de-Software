@@ -36,13 +36,14 @@ public class ConfiguradorBilhetesService : IConfiguradorBilhetesService
             .ThenInclude(b => b.IdTipoNavigation)
             .FirstOrDefaultAsync(e => e.IdEvento == eventoId);
 
-        if (evento == null)
+        if (evento == null || evento.IsCancelado)
             return Array.Empty<OfertaBilheteEventoDto>();
 
         await GarantirTiposBaseAsync();
         await GarantirBilhetesPadraoAsync(evento);
 
         return evento.BilhetesEventos
+            .Where(be => !be.IsCancelado)
             .OrderBy(be => OrdemTipo(be.IdBilheteNavigation.IdTipoNavigation?.Nome))
             .Select(MapearOferta)
             .ToList();
@@ -56,7 +57,7 @@ public class ConfiguradorBilhetesService : IConfiguradorBilhetesService
             .ThenInclude(b => b.IdTipoNavigation)
             .FirstOrDefaultAsync(e => e.IdEvento == eventoId);
 
-        if (evento == null)
+        if (evento == null || evento.IsCancelado)
             return;
 
         await GarantirTiposBaseAsync();
@@ -111,18 +112,20 @@ public class ConfiguradorBilhetesService : IConfiguradorBilhetesService
             )
             : DistribuirCapacidade(evento.CapMax ?? 0);
 
-        var precoBase = precoBasePersonalizado ?? (evento.BilhetesEventos.Any()
-            ? evento.BilhetesEventos.OrderBy(be => be.IdBiEv).First().Preco
+        var bilhetesAtivos = evento.BilhetesEventos.Where(be => !be.IsCancelado).ToList();
+
+        var precoBase = precoBasePersonalizado ?? (bilhetesAtivos.Any()
+            ? bilhetesAtivos.OrderBy(be => be.IdBiEv).First().Preco
             : 0d);
 
         var precoGold = Math.Round(precoBase * 1.5, 2);
         var precoVip = Math.Round(precoBase * 2.2, 2);
 
-        var standard = evento.BilhetesEventos.FirstOrDefault(be =>
+        var standard = bilhetesAtivos.FirstOrDefault(be =>
             be.IdBilheteNavigation.IdTipoNavigation?.Nome == TipoStandard);
 
         if (standard == null)
-            standard = evento.BilhetesEventos.OrderBy(be => be.IdBiEv).FirstOrDefault();
+            standard = bilhetesAtivos.OrderBy(be => be.IdBiEv).FirstOrDefault();
 
         if (standard == null)
         {
@@ -167,6 +170,7 @@ public class ConfiguradorBilhetesService : IConfiguradorBilhetesService
         bool forcarConfiguracao = false)
     {
         var bilheteEvento = evento.BilhetesEventos.FirstOrDefault(be =>
+            !be.IsCancelado &&
             be.IdBilheteNavigation.IdTipoNavigation?.Nome == tipoBilhete.Nome);
 
         if (bilheteEvento == null)
