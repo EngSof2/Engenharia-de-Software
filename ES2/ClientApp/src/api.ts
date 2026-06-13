@@ -61,5 +61,16 @@ export const api = {
 
   getUsers: () => request<UserRow[]>("/api/utilizadores"),
 
-  getPurchaseHistory: () => request<Purchase[]>("/api/bilhetes/historico")
+  getPurchaseHistory: () => request<Purchase[]>("/api/bilhetes/historico"),
+
+  deleteEvent: (id: number) =>
+    request(`/api/eventos/${id}`, {
+      method: "DELETE"
+    }),
+
+  updateEvent: (id: number, data: any) =>
+    request(`/api/eventos/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data)
+    })
 };

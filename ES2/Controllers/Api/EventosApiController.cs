@@ -416,41 +416,47 @@ public class EventosApiController : ControllerBase
         public string? ImageUrl { get; set; }
     }
 
-    [Authorize]
+    [Authorize(Roles = "Admin,Organizador")]
     [HttpPost]
     public async Task<IActionResult> Criar([FromBody] CriarEventoRequest req, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Nome))
-            return BadRequest(new { message = "Nome e obrigatorio." });
+            return BadRequest("Nome e obrigatorio.");
 
         if (string.IsNullOrWhiteSpace(req.Data) || !DateOnly.TryParse(req.Data, out var data))
-            return BadRequest(new { message = "Data invalida." });
+            return BadRequest("Data invalida.");
 
         if (string.IsNullOrWhiteSpace(req.HoraInicio) || !TimeOnly.TryParse(req.HoraInicio, out var horaInicio))
-            return BadRequest(new { message = "HoraInicio invalida." });
+            return BadRequest("HoraInicio invalida.");
 
         if (string.IsNullOrWhiteSpace(req.Local))
-            return BadRequest(new { message = "Local e obrigatorio." });
+            return BadRequest("Local e obrigatorio.");
 
         if (string.IsNullOrWhiteSpace(req.Descricao))
-            return BadRequest(new { message = "Descricao e obrigatoria." });
+            return BadRequest("Descricao e obrigatoria.");
 
         if (req.Capacidade is null or <= 0)
-            return BadRequest(new { message = "Capacidade invalida." });
+            return BadRequest("Capacidade invalida.");
 
         if (req.Preco is null or < 0)
-            return BadRequest(new { message = "Preco invalido." });
+            return BadRequest("Preco invalido.");
 
         if (req.QuantidadeStandard is null or < 0 ||
             req.QuantidadeGold is null or < 0 ||
             req.QuantidadeVip is null or < 0)
-            return BadRequest(new { message = "As quantidades de bilhetes sao obrigatorias e nao podem ser negativas." });
+            return BadRequest("As quantidades de bilhetes sao obrigatorias e nao podem ser negativas.");
 
         if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip > req.Capacidade)
-            return BadRequest(new { message = "A soma dos bilhetes Standard, Gold e VIP nao pode ultrapassar a capacidade maxima do evento." });
+            return BadRequest("A soma dos bilhetes Standard, Gold e VIP nao pode ultrapassar a capacidade maxima do evento.");
 
         if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip <= 0)
-            return BadRequest(new { message = "Deves disponibilizar pelo menos um bilhete." });
+            return BadRequest("Deves disponibilizar pelo menos um bilhete.");
+
+        var nomeUtilizador = User.Identity?.Name;
+        var organizador = string.IsNullOrWhiteSpace(nomeUtilizador)
+            ? null
+            : await _context.Utilizadores
+                .FirstOrDefaultAsync(u => u.Nome == nomeUtilizador, ct);
 
         var evento = new Evento
         {
@@ -460,7 +466,8 @@ public class EventosApiController : ControllerBase
             Local = req.Local.Trim(),
             Descricao = req.Descricao.Trim(),
             CapMax = req.Capacidade,
-            IdCategoria = req.IdCategoria
+            IdCategoria = req.IdCategoria,
+            IdOrganizador = organizador?.IdUti
         };
 
         await using var tx = await _context.Database.BeginTransactionAsync(ct);
@@ -529,6 +536,173 @@ public class EventosApiController : ControllerBase
             await tx.RollbackAsync(ct);
             return Problem("Nao foi possivel criar o evento.");
         }
+    }
+
+    [Authorize(Roles = "Admin,Organizador")]
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Editar(int id, [FromBody] CriarEventoRequest req, CancellationToken ct)
+    {
+        var evento = await _context.Eventos
+            .Include(e => e.BilhetesEventos)
+            .FirstOrDefaultAsync(e => e.IdEvento == id, ct);
+
+        if (evento == null)
+            return NotFound("O evento nao existe.");
+
+        if (!await TemPermissaoEditarEventoAsync(evento, ct))
+            return Forbid("Nao tens permissao para editar este evento.");
+
+        if (string.IsNullOrWhiteSpace(req.Nome))
+            return BadRequest("Nome e obrigatorio.");
+
+        if (string.IsNullOrWhiteSpace(req.Data) || !DateOnly.TryParse(req.Data, out var data))
+            return BadRequest("Data invalida.");
+
+        if (string.IsNullOrWhiteSpace(req.HoraInicio) || !TimeOnly.TryParse(req.HoraInicio, out var horaInicio))
+            return BadRequest("HoraInicio invalida.");
+
+        if (string.IsNullOrWhiteSpace(req.Local))
+            return BadRequest("Local e obrigatorio.");
+
+        if (string.IsNullOrWhiteSpace(req.Descricao))
+            return BadRequest("Descricao e obrigatoria.");
+
+        if (req.Capacidade is null or <= 0)
+            return BadRequest("Capacidade invalida.");
+
+        if (req.Preco is null or < 0)
+            return BadRequest("Preco invalido.");
+
+        if (req.QuantidadeStandard is null or < 0 ||
+            req.QuantidadeGold is null or < 0 ||
+            req.QuantidadeVip is null or < 0)
+            return BadRequest("As quantidades de bilhetes sao obrigatorias e nao podem ser negativas.");
+
+        if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip > req.Capacidade)
+            return BadRequest("A soma dos bilhetes Standard, Gold e VIP nao pode ultrapassar a capacidade maxima do evento.");
+
+        if (req.QuantidadeStandard + req.QuantidadeGold + req.QuantidadeVip <= 0)
+            return BadRequest("Deves disponibilizar pelo menos um bilhete.");
+
+        evento.Nome = req.Nome.Trim();
+        evento.Data = data;
+        evento.HoraInicio = horaInicio;
+        evento.Local = req.Local.Trim();
+        evento.Descricao = req.Descricao.Trim();
+        evento.CapMax = req.Capacidade;
+        evento.IdCategoria = req.IdCategoria;
+
+        await _context.SaveChangesAsync(ct);
+
+        if (!string.IsNullOrWhiteSpace(req.ImageUrl))
+        {
+            var imageCol = await TryGetEventoImageUrlColumnAsync(ct);
+            if (!string.IsNullOrWhiteSpace(imageCol))
+            {
+                var conn = _context.Database.GetDbConnection();
+                if (conn.State != ConnectionState.Open)
+                    await conn.OpenAsync(ct);
+
+                var safeCol = imageCol.Replace("\"", "\"\"");
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = $"""
+                                   update "ES2"."Evento"
+                                   set "{safeCol}" = @p_url
+                                   where "ID_Evento" = @p_id;
+                                   """;
+                var pUrl = cmd.CreateParameter();
+                pUrl.ParameterName = "p_url";
+                pUrl.Value = req.ImageUrl.Trim();
+                cmd.Parameters.Add(pUrl);
+
+                var pId = cmd.CreateParameter();
+                pId.ParameterName = "p_id";
+                pId.Value = evento.IdEvento;
+                cmd.Parameters.Add(pId);
+
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
+        }
+
+        await _configuradorBilhetes.ConfigurarBilhetesEventoAsync(
+            evento.IdEvento,
+            req.Preco.Value,
+            req.QuantidadeStandard.Value,
+            req.QuantidadeGold.Value,
+            req.QuantidadeVip.Value);
+
+        return Ok("Evento editado com sucesso.");
+    }
+
+    [Authorize(Roles = "Admin,Organizador")]
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Eliminar(int id, CancellationToken ct)
+    {
+        var evento = await _context.Eventos
+            .Include(e => e.BilhetesEventos)
+            .Include(e => e.Atividades)
+            .Include(e => e.RegistoEventos)
+            .FirstOrDefaultAsync(e => e.IdEvento == id, ct);
+
+        if (evento == null)
+            return NotFound("O evento nao existe.");
+
+        if (!await TemPermissaoEditarEventoAsync(evento, ct))
+            return Forbid("Nao tens permissao para eliminar este evento.");
+
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
+
+        try
+        {
+            var atividadesIds = evento.Atividades.Select(a => a.IdAtividade).ToList();
+            var registoAtividades = await _context.RegistoAtividades
+                .Where(r => atividadesIds.Contains(r.IdAtividade))
+                .ToListAsync(ct);
+            _context.RegistoAtividades.RemoveRange(registoAtividades);
+
+            _context.Atividades.RemoveRange(evento.Atividades);
+
+            _context.RegistoEventos.RemoveRange(evento.RegistoEventos);
+
+            var bilheteUtils = await _context.BilheteUtils
+                .Where(bu => evento.BilhetesEventos.Select(be => be.IdBiEv).Contains(bu.IdBiEv.Value))
+                .ToListAsync(ct);
+            _context.BilheteUtils.RemoveRange(bilheteUtils);
+
+            _context.BilhetesEventos.RemoveRange(evento.BilhetesEventos);
+
+            _context.Eventos.Remove(evento);
+
+            await _context.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            return Ok("Evento eliminado com sucesso.");
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            return Problem("Nao foi possivel eliminar o evento.");
+        }
+    }
+
+    private async Task<bool> TemPermissaoEditarEventoAsync(Evento evento, CancellationToken ct)
+    {
+        var nomeUtilizador = User.Identity?.Name;
+        var utilizador = string.IsNullOrWhiteSpace(nomeUtilizador)
+            ? null
+            : await _context.Utilizadores
+                .FirstOrDefaultAsync(u => u.Nome == nomeUtilizador, ct);
+
+        if (utilizador == null)
+            return false;
+
+        if (User.IsInRole("Admin"))
+            return true;
+
+        if (User.IsInRole("Organizador"))
+            return evento.IdOrganizador == utilizador.IdUti;
+
+        return false;
     }
 
     private async Task<(bool Sucesso, string Mensagem)> AlterarInscricaoAtividadeAsync(
@@ -612,7 +786,7 @@ public class EventosApiController : ControllerBase
                          bu.IdBiEvNavigation != null &&
                          bu.IdBiEvNavigation.IdEvento == eventoId)
             .OrderByDescending(bu => bu.IdBiUti)
-            .Select(bu => bu.IdBiEvNavigation!.IdBilheteNavigation.IdTipoNavigation!.Nome)
+            .Select(bu => bu.IdBiEvNavigation.IdBilheteNavigation.IdTipoNavigation.Nome)
             .FirstOrDefaultAsync(ct);
 
         return string.Equals(tipoBilhete, "Gold", StringComparison.OrdinalIgnoreCase) ||

@@ -3,16 +3,42 @@ import { ProfileView } from "./components/ProfileView";
 import { EditProfileView } from "./components/EditProfileView";
 import { UsersView } from "./components/UsersView";
 import { PurchaseHistoryView } from "./components/PurchaseHistoryView";
+import { EventsView } from "./components/EventsView";
+import { EventDetailsView } from "./components/EventDetailsView";
 
-type Page = "home" | "events" | "profile" | "edit_profile" | "users" | "purchase_history";
+type Page = "home" | "events" | "event_details" | "profile" | "edit_profile" | "users" | "purchase_history";
 
-export function App() {
+export default function App() {
   const [page, setPage] = useState<Page>("home");
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   function navigate(nextPage: Page) {
     setPage(nextPage);
     const url = nextPage === "home" ? "/Home/Index" : `/Home/Index?page=${nextPage}`;
     window.history.pushState({ page: nextPage }, "", url);
+  }
+
+  const handleEventClick = (event: any) => {
+    setSelectedEvent(event);
+    navigate("event_details");
+  };
+
+  const handleBack = () => {
+    setSelectedEvent(null);
+    navigate("events");
+  };
+
+  const handleEdit = (event: any) => {
+    // TODO: Navigate to edit page
+    console.log("Edit event:", event);
+  };
+
+  if (page === "events") {
+    return <EventsView onEventClick={handleEventClick} />;
+  }
+
+  if (page === "event_details" && selectedEvent) {
+    return <EventDetailsView event={selectedEvent} onBack={handleBack} onEdit={handleEdit} />;
   }
 
   if (page === "profile") {

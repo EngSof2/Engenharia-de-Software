@@ -19,6 +19,8 @@ public partial class Evento
 
     public int? IdCategoria { get; set; }
 
+    public int? IdOrganizador { get; set; }
+
     public TimeOnly? HoraInicio { get; set; }
 
     public TimeOnly? HoraFim { get; set; }
@@ -32,6 +34,8 @@ public partial class Evento
     public virtual ICollection<FeedbackEvnt> FeedbackEvnts { get; set; } = new List<FeedbackEvnt>();
 
     public virtual Categoria? IdCategoriaNavigation { get; set; }
+
+    public virtual Utilizador? IdOrganizadorNavigation { get; set; }
 
     public virtual ICollection<RegistoEvento> RegistoEventos { get; set; } = new List<RegistoEvento>();
 }

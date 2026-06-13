@@ -54,7 +54,7 @@ public partial class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=ES2;Username=postgres;Password=1234");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=ES2;Username=postgres;Password=123");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -205,12 +205,17 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.HoraFim).HasColumnName("hora_fim");
             entity.Property(e => e.HoraInicio).HasColumnName("hora_inicio");
             entity.Property(e => e.IdCategoria).HasColumnName("ID_Categoria");
+            entity.Property(e => e.IdOrganizador).HasColumnName("ID_Organizador");
             entity.Property(e => e.Local).HasMaxLength(50);
             entity.Property(e => e.Nome).HasMaxLength(100);
 
             entity.HasOne(d => d.IdCategoriaNavigation).WithMany(p => p.Eventos)
                 .HasForeignKey(d => d.IdCategoria)
                 .HasConstraintName("Categoria");
+
+            entity.HasOne(d => d.IdOrganizadorNavigation).WithMany()
+                .HasForeignKey(d => d.IdOrganizador)
+                .HasConstraintName("Organizador");
         });
 
         modelBuilder.Entity<FeedbackAtv>(entity =>

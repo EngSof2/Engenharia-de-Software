@@ -110,6 +110,9 @@ public class EventoController : Controller
         if (!string.IsNullOrWhiteSpace(dto.NovaCategoria))
             dto.IdCategoria = await ObterOuCriarCategoriaAsync(dto.NovaCategoria);
 
+        var organizador = await _context.Utilizadores
+            .FirstOrDefaultAsync(u => u.Nome == User.Identity!.Name);
+
         var evento = new Evento
         {
             Nome = dto.Nome,
@@ -118,7 +121,8 @@ public class EventoController : Controller
             Local = dto.Local,
             Descricao = dto.Descricao,
             CapMax = dto.Capacidade,
-            IdCategoria = dto.IdCategoria
+            IdCategoria = dto.IdCategoria,
+            IdOrganizador = organizador?.IdUti
         };
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -177,6 +181,12 @@ public class EventoController : Controller
         if (evento == null)
             return NotFound();
 
+        if (!await TemPermissaoEditarEventoAsync(evento))
+        {
+            TempData["Erro"] = "Nao tens permissao para editar este evento.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var dto = new CriarEventoDto
         {
             IdEvento = evento.IdEvento,
@@ -225,6 +235,12 @@ public class EventoController : Controller
 
         if (evento == null)
             return NotFound();
+
+        if (!await TemPermissaoEditarEventoAsync(evento))
+        {
+            TempData["Erro"] = "Nao tens permissao para editar este evento.";
+            return RedirectToAction(nameof(Index));
+        }
 
         if (!string.IsNullOrWhiteSpace(dto.NovaCategoria))
             dto.IdCategoria = await ObterOuCriarCategoriaAsync(dto.NovaCategoria);
@@ -379,6 +395,70 @@ public class EventoController : Controller
         return View(eventos);
     }
 
+    // Só Admin e Organizador podem eliminar eventos
+    [Authorize(Roles = "Admin,Organizador")]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Eliminar(int id)
+    {
+        var evento = await _context.Eventos
+            .Include(e => e.BilhetesEventos)
+            .Include(e => e.Atividades)
+            .Include(e => e.RegistoEventos)
+            .FirstOrDefaultAsync(e => e.IdEvento == id);
+
+        if (evento == null)
+            return NotFound();
+
+        if (!await TemPermissaoEditarEventoAsync(evento))
+        {
+            TempData["Erro"] = "Nao tens permissao para eliminar este evento.";
+            return RedirectToAction(nameof(Gerir));
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            // Remove registos de atividades
+            var atividadesIds = evento.Atividades.Select(a => a.IdAtividade).ToList();
+            var registoAtividades = await _context.RegistoAtividades
+                .Where(r => atividadesIds.Contains(r.IdAtividade))
+                .ToListAsync();
+            _context.RegistoAtividades.RemoveRange(registoAtividades);
+
+            // Remove atividades
+            _context.Atividades.RemoveRange(evento.Atividades);
+
+            // Remove registos de eventos
+            _context.RegistoEventos.RemoveRange(evento.RegistoEventos);
+
+            // Remove bilhetes do evento
+            var bilheteUtils = await _context.BilheteUtils
+                .Where(bu => evento.BilhetesEventos.Select(be => be.IdBiEv).Contains(bu.IdBiEv.Value))
+                .ToListAsync();
+            _context.BilheteUtils.RemoveRange(bilheteUtils);
+
+            // Remove bilhetes do evento
+            _context.BilhetesEventos.RemoveRange(evento.BilhetesEventos);
+
+            // Remove o evento
+            _context.Eventos.Remove(evento);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["Sucesso"] = "Evento eliminado com sucesso.";
+            return RedirectToAction(nameof(Gerir));
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            TempData["Erro"] = "Nao foi possivel eliminar o evento. Tenta novamente.";
+            return RedirectToAction(nameof(Gerir));
+        }
+    }
+
     private async Task<int> ObterOuCriarCategoriaAsync(string nomeCategoria)
     {
         var nomeNormalizado = nomeCategoria.Trim();
@@ -482,5 +562,24 @@ public class EventoController : Controller
 
         var result = await cmd.ExecuteScalarAsync();
         return result as string;
+    }
+
+    private async Task<bool> TemPermissaoEditarEventoAsync(Evento evento)
+    {
+        var utilizador = await _context.Utilizadores
+            .FirstOrDefaultAsync(u => u.Nome == User.Identity!.Name);
+
+        if (utilizador == null)
+            return false;
+
+        // Admin pode editar todos os eventos
+        if (User.IsInRole("Admin"))
+            return true;
+
+        // Organizador so pode editar os seus proprios eventos
+        if (User.IsInRole("Organizador"))
+            return evento.IdOrganizador == utilizador.IdUti;
+
+        return false;
     }
 }

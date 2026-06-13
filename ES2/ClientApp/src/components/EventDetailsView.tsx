@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, ChevronDown, Clock, Users, MapPin, ArrowLeft, X, ShoppingCart, CheckCircle2, Star, Diamond, Plus } from "lucide-react";
+import { Search, ChevronDown, Clock, Users, MapPin, ArrowLeft, X, ShoppingCart, CheckCircle2, Star, Diamond, Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { api, Profile } from "../api";
 
 // Mock activities generation based on event title
 const generateMockActivities = (eventTitle: string) => [
@@ -11,11 +12,35 @@ const generateMockActivities = (eventTitle: string) => [
   { id: 5, name: "Closing Ceremony", location: "Stage Principal", capacity: 5000, time: "04:00" },
 ];
 
-export function EventDetailsView({ event, onBack }: { event: any; onBack: () => void }) {
+export function EventDetailsView({ event, onBack, onEdit }: { event: any; onBack: () => void; onEdit?: (event: any) => void }) {
   const [showFilters, setShowFilters] = useState(false);
   const [searchName, setSearchName] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
   const [sortOrder, setSortOrder] = useState<"time_asc" | "time_desc" | "alpha">("time_asc");
+
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getProfile().then(setProfile).catch(console.error);
+  }, []);
+
+  const canEditEvent = profile && (profile.perfil === "Admin" || profile.perfil === "Organizador");
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.deleteEvent(event.id);
+      setShowDeleteModal(false);
+      onBack();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Erro ao eliminar evento");
+      setIsDeleting(false);
+    }
+  };
 
   // Fallback if event doesn't have activities
   const initialActivities = event.activities || generateMockActivities(event.title);
@@ -88,12 +113,31 @@ export function EventDetailsView({ event, onBack }: { event: any; onBack: () => 
 
           <div className="relative z-10 p-8 md:p-16">
             {/* Back Button */}
-            <button 
-              onClick={onBack}
-          className="flex items-center gap-2 text-white/50 hover:text-yellow-400 font-mono text-sm uppercase tracking-widest transition-colors mb-12 group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Voltar para Eventos
-        </button>
+            <div className="flex items-center justify-between mb-12">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-2 text-white/50 hover:text-yellow-400 font-mono text-sm uppercase tracking-widest transition-colors group"
+              >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Voltar para Eventos
+              </button>
+
+              {canEditEvent && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => onEdit?.(event)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-xs font-bold font-mono uppercase tracking-widest transition-all hover:scale-105"
+                  >
+                    <Edit className="w-4 h-4" /> Editar
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-full text-red-400 text-xs font-bold font-mono uppercase tracking-widest transition-all hover:scale-105"
+                  >
+                    <Trash2 className="w-4 h-4" /> Eliminar
+                  </button>
+                </div>
+              )}
+            </div>
 
         {/* Event Header Info and Tickets Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-20 pb-20 border-b border-white/5">
@@ -399,6 +443,75 @@ export function EventDetailsView({ event, onBack }: { event: any; onBack: () => 
         </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !isDeleting && setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold tracking-tighter uppercase text-white">Eliminar Evento</h3>
+                  <p className="text-white/50 text-sm font-mono">Confirmação necessária</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-white/70 text-sm mb-4">
+                  Tem a certeza que deseja eliminar o evento <span className="text-white font-bold">{event.title}</span>?
+                </p>
+                <p className="text-red-400/80 text-xs font-mono">
+                  ⚠️ Esta ação irá eliminar permanentemente o evento e todos os dados associados:
+                </p>
+                <ul className="text-red-400/60 text-xs font-mono mt-2 list-disc list-inside">
+                  <li>Atividades do evento</li>
+                  <li>Registos de participantes</li>
+                  <li>Bilhetes associados</li>
+                  <li>Outros dados relacionados</li>
+                </ul>
+              </div>
+
+              {deleteError && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <p className="text-red-400 text-xs font-mono">{deleteError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white text-xs font-bold font-mono uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 rounded-full text-white text-xs font-bold font-mono uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                >
+                  {isDeleting ? 'A eliminar...' : 'Confirmar Eliminação'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
