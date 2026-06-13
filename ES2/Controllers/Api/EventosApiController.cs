@@ -1,6 +1,7 @@
 using System.Data;
 using ES2.Data;
 using ES2.Models;
+using ES2.Repositories.Interfaces;
 using ES2.Services.Inscricoes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,15 +16,18 @@ public class EventosApiController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IConfiguradorBilhetesService _configuradorBilhetes;
     private readonly IInscricaoEventoService _inscricaoEventoService;
+    private readonly IFeedbackEvntRepository _feedbackEvntRepository;
 
     public EventosApiController(
         AppDbContext context,
         IConfiguradorBilhetesService configuradorBilhetes,
-        IInscricaoEventoService inscricaoEventoService)
+        IInscricaoEventoService inscricaoEventoService,
+        IFeedbackEvntRepository feedbackEvntRepository)
     {
         _context = context;
         _configuradorBilhetes = configuradorBilhetes;
         _inscricaoEventoService = inscricaoEventoService;
+        _feedbackEvntRepository = feedbackEvntRepository;
     }
 
     private async Task<string?> TryGetEventoImageUrlColumnAsync(CancellationToken ct)
@@ -159,6 +163,84 @@ public class EventosApiController : ControllerBase
                 esgotado = o.Esgotado
             })
         });
+    }
+
+    // Qualquer utilizador (mesmo nao inscrito) pode ver as avaliacoes do evento.
+    [HttpGet("{id:int}/avaliacoes")]
+    public async Task<IActionResult> ListarAvaliacoes(int id, CancellationToken ct)
+    {
+        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id, ct);
+        if (!existeEvento)
+            return NotFound();
+
+        var feedbacks = await _feedbackEvntRepository.GetByEventoComUtilizadorAsync(id);
+        var media = feedbacks.Count > 0
+            ? Math.Round(feedbacks.Average(f => f.Classificacao), 1)
+            : 0d;
+
+        var nome = User.Identity?.Name;
+        var autenticado = !string.IsNullOrWhiteSpace(nome);
+        var jaInscrito = autenticado &&
+                         (await _inscricaoEventoService.ObterEventosInscritosAsync(nome)).Contains(id);
+
+        return Ok(new
+        {
+            media,
+            total = feedbacks.Count,
+            autenticado,
+            jaInscrito,
+            avaliacoes = feedbacks.Select(f => new
+            {
+                autor = f.IdUtiNavigation != null ? f.IdUtiNavigation.Nome : "Utilizador",
+                classificacao = f.Classificacao,
+                descricao = f.Descricao
+            })
+        });
+    }
+
+    public sealed class CriarAvaliacaoRequest
+    {
+        public int Classificacao { get; set; }
+        public string? Descricao { get; set; }
+    }
+
+    // So utilizadores inscritos no evento podem deixar uma avaliacao (1 a 5 estrelas + comentario).
+    [Authorize]
+    [HttpPost("{id:int}/avaliacoes")]
+    public async Task<IActionResult> AdicionarAvaliacao(int id, [FromBody] CriarAvaliacaoRequest req, CancellationToken ct)
+    {
+        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id, ct);
+        if (!existeEvento)
+            return NotFound(new { message = "O evento selecionado nao existe." });
+
+        var nome = User.Identity?.Name;
+        var utilizador = string.IsNullOrWhiteSpace(nome)
+            ? null
+            : await _context.Utilizadores.FirstOrDefaultAsync(u => u.Nome == nome, ct);
+
+        if (utilizador == null)
+            return BadRequest(new { message = "Nao foi possivel identificar o utilizador autenticado." });
+
+        var inscrito = (await _inscricaoEventoService.ObterEventosInscritosAsync(nome)).Contains(id);
+        if (!inscrito)
+            return BadRequest(new { message = "So podes avaliar eventos em que estas inscrito." });
+
+        if (req.Classificacao is < 1 or > 5)
+            return BadRequest(new { message = "A classificacao tem de ser entre 1 e 5 estrelas." });
+
+        var descricao = req.Descricao?.Trim();
+        if (string.IsNullOrWhiteSpace(descricao))
+            return BadRequest(new { message = "O comentario nao pode estar vazio." });
+
+        await _feedbackEvntRepository.AddAsync(new FeedbackEvnt
+        {
+            IdEvento = id,
+            IdUti = utilizador.IdUti,
+            Classificacao = req.Classificacao,
+            Descricao = descricao
+        });
+
+        return Ok(new { message = "Avaliacao submetida com sucesso. Obrigado pelo teu feedback!" });
     }
 
     [HttpGet("{id:int}/atividades")]

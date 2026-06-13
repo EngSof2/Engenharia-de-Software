@@ -13,6 +13,9 @@ public partial class FeedbackEvnt
 
     public string Descricao { get; set; } = null!;
 
+    /// <summary>Classificacao em estrelas atribuida pelo utilizador (1 a 5).</summary>
+    public int Classificacao { get; set; }
+
     public virtual Evento IdEventoNavigation { get; set; } = null!;
 
     public virtual Utilizador IdUtiNavigation { get; set; } = null!;

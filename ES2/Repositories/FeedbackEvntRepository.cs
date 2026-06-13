@@ -27,6 +27,13 @@ public class FeedbackEvntRepository : IFeedbackEvntRepository
             .Where(f => f.IdUti == utilizadorId)
             .ToListAsync();
 
+    public async Task<IReadOnlyList<FeedbackEvnt>> GetByEventoComUtilizadorAsync(int eventoId) =>
+        await _context.FeedbackEvnts
+            .Include(f => f.IdUtiNavigation)
+            .Where(f => f.IdEvento == eventoId)
+            .OrderByDescending(f => f.IdFbevnt)
+            .ToListAsync();
+
     public async Task AddAsync(FeedbackEvnt feedbackEvnt)
     {
         await _context.FeedbackEvnts.AddAsync(feedbackEvnt);

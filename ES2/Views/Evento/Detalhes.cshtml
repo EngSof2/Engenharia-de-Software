@@ -570,6 +570,197 @@
         text-transform: uppercase;
     }
 
+    .feedback-section {
+        margin-top: 4rem;
+        padding-top: 3rem;
+        border-top: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .feedback-summary {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        flex-wrap: wrap;
+        margin: 1.75rem 0 2.5rem;
+    }
+
+    .feedback-average {
+        font-size: clamp(2.8rem, 7vw, 4rem);
+        font-weight: 900;
+        line-height: 1;
+        color: #facc15;
+    }
+
+    .feedback-average small {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, .5);
+        font-weight: 700;
+    }
+
+    .feedback-summary-meta {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+
+    .stars {
+        display: inline-flex;
+        gap: .2rem;
+        color: #facc15;
+        font-size: 1.15rem;
+    }
+
+    .stars .bi-star {
+        color: rgba(255, 255, 255, .25);
+    }
+
+    .feedback-count {
+        color: rgba(255, 255, 255, .55);
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+        font-size: .75rem;
+        font-weight: 800;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+    }
+
+    .feedback-list {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .feedback-card {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, .1);
+        background: rgba(255, 255, 255, .035);
+        padding: 1.25rem 1.4rem;
+    }
+
+    .feedback-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: .65rem;
+    }
+
+    .feedback-author {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        font-size: .95rem;
+    }
+
+    .feedback-text {
+        margin: 0;
+        color: rgba(255, 255, 255, .74);
+        font-size: .92rem;
+        overflow-wrap: anywhere;
+    }
+
+    .feedback-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        color: rgba(255, 255, 255, .42);
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+        font-size: .8rem;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+
+    .feedback-form {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, .1);
+        background: rgba(255, 255, 255, .025);
+        padding: 1.6rem;
+    }
+
+    .feedback-form h3 {
+        font-size: 1.15rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 0 0 1.1rem;
+    }
+
+    .rating-input {
+        display: inline-flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: .25rem;
+        margin-bottom: 1rem;
+    }
+
+    .rating-input input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .rating-input label {
+        font-size: 1.9rem;
+        line-height: 1;
+        color: rgba(255, 255, 255, .25);
+        cursor: pointer;
+        transition: color .15s ease, transform .15s ease;
+    }
+
+    .rating-input label:hover,
+    .rating-input label:hover ~ label,
+    .rating-input input:checked ~ label {
+        color: #facc15;
+    }
+
+    .rating-input label:hover {
+        transform: scale(1.12);
+    }
+
+    .feedback-textarea {
+        width: 100%;
+        min-height: 6rem;
+        resize: vertical;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, .18);
+        background: rgba(0, 0, 0, .25);
+        color: #fff;
+        padding: .9rem 1rem;
+        font-size: .92rem;
+    }
+
+    .feedback-textarea:focus {
+        outline: none;
+        border-color: #facc15;
+        background: rgba(0, 0, 0, .35);
+    }
+
+    .feedback-submit {
+        margin-top: 1rem;
+        border-radius: 999px;
+        border: 1px solid #facc15;
+        background: #facc15;
+        color: #050505;
+        padding: .72rem 1.6rem;
+        font-size: .74rem;
+        font-weight: 900;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: transform .2s ease, background .2s ease;
+    }
+
+    .feedback-submit:hover {
+        transform: scale(1.04);
+        background: #fde047;
+    }
+
+    .feedback-locked {
+        color: rgba(255, 255, 255, .5);
+        font-size: .9rem;
+        font-style: italic;
+    }
+
     @@media (max-width: 991.98px) {
         .event-top-grid {
             grid-template-columns: 1fr;
@@ -844,6 +1035,88 @@
                             <div class="empty-activities d-none" data-no-results>Nenhuma atividade encontrada.</div>
                         }
                     </div>
+                </section>
+
+                <section class="feedback-section" aria-labelledby="avaliacoes-title">
+                    <h2 id="avaliacoes-title" class="event-section-title">Avaliacoes</h2>
+
+                    @{
+                        var mediaArredondada = (int)Math.Round(Model.MediaClassificacao, MidpointRounding.AwayFromZero);
+                    }
+
+                    <div class="feedback-summary">
+                        <div class="feedback-average">
+                            @Model.MediaClassificacao.ToString("0.0")<small>/5</small>
+                        </div>
+                        <div class="feedback-summary-meta">
+                            <span class="stars" aria-label="Media de @Model.MediaClassificacao.ToString("0.0") em 5 estrelas">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= mediaArredondada ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </span>
+                            <span class="feedback-count">
+                                @Model.TotalFeedbacks @(Model.TotalFeedbacks == 1 ? "avaliacao" : "avaliacoes")
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="feedback-list">
+                        @if (!Model.Feedbacks.Any())
+                        {
+                            <div class="feedback-empty">Este evento ainda nao tem avaliacoes. Se ja participaste, deixa a primeira!</div>
+                        }
+                        else
+                        {
+                            foreach (var feedback in Model.Feedbacks)
+                            {
+                                <article class="feedback-card">
+                                    <div class="feedback-card-head">
+                                        <span class="feedback-author">
+                                            <i class="bi bi-person-circle"></i>
+                                            @(feedback.IdUtiNavigation?.Nome ?? "Utilizador")
+                                        </span>
+                                        <span class="stars" aria-label="@feedback.Classificacao em 5 estrelas">
+                                            @for (var i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi @(i <= feedback.Classificacao ? "bi-star-fill" : "bi-star")"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <p class="feedback-text">@feedback.Descricao</p>
+                                </article>
+                            }
+                        }
+                    </div>
+
+                    @if (Model.JaInscrito)
+                    {
+                        <form asp-action="AdicionarFeedback" method="post" class="feedback-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@evento.IdEvento" />
+
+                            <h3>Deixa a tua avaliacao</h3>
+
+                            <div class="rating-input" role="radiogroup" aria-label="Classificacao em estrelas">
+                                @for (var valor = 5; valor >= 1; valor--)
+                                {
+                                    var inputId = $"estrela-{valor}";
+                                    <input type="radio" name="classificacao" id="@inputId" value="@valor" required />
+                                    <label for="@inputId" title="@valor estrela@(valor == 1 ? "" : "s")"><i class="bi bi-star-fill"></i></label>
+                                }
+                            </div>
+
+                            <textarea name="descricao" class="feedback-textarea" maxlength="500" placeholder="Conta como foi a tua experiencia neste evento..." required></textarea>
+
+                            <div>
+                                <button type="submit" class="feedback-submit">Submeter avaliacao</button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="feedback-locked">So podes avaliar este evento se estiveres inscrito.</p>
+                    }
                 </section>
             </div>
         </section>

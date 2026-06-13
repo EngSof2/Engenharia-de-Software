@@ -32,6 +32,7 @@ builder.Services.AddScoped<IUtilizadorRepository, UtilizadorRepository>();
 builder.Services.AddScoped<IEventoRepository, EventoRepository>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>(); 
 builder.Services.AddScoped<IBilhetesEventoRepository, BilhetesEventoRepository>();
+builder.Services.AddScoped<IFeedbackEvntRepository, FeedbackEvntRepository>();
 builder.Services.AddScoped<ITipoBilheteRepository, TipoBilheteRepository>();
 builder.Services.AddScoped<IAutenticacaoService, AutenticacaoService>();
 builder.Services.AddScoped<IRegistoService, RegistoService>();
@@ -77,6 +78,11 @@ using (var scope = app.Services.CreateScope())
     context.Database.ExecuteSqlRaw("""
         ALTER TABLE "ES2"."Bilhetes_Eventos"
         ADD COLUMN IF NOT EXISTS "QuantidadeDisponivel" integer NOT NULL DEFAULT 0;
+        """);
+
+    context.Database.ExecuteSqlRaw("""
+        ALTER TABLE "ES2"."FeedbackEvnt"
+        ADD COLUMN IF NOT EXISTS "Classificacao" integer NOT NULL DEFAULT 0;
         """);
 
     bool existeAdmin = context.Utilizadores.Any(u => u.TipoUti == 1);

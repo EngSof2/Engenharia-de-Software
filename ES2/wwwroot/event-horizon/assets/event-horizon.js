@@ -203,3 +203,289 @@ function EHPurchaseHistoryView({onNavigate:i}){
 
 
 
+
+
+/* ===========================================================================
+ * Avaliacoes de eventos  (bloco adicionado ao fim do bundle event-horizon.js)
+ * ---------------------------------------------------------------------------
+ * Adiciona a seccao "Avaliacoes" no ecra de detalhes do evento da SPA:
+ *   - Qualquer utilizador ve a media e a lista de avaliacoes (1 a 5 estrelas).
+ *   - So utilizadores INSCRITOS no evento conseguem submeter uma avaliacao.
+ * Backend: GET/POST  /api/eventos/{id}/avaliacoes  (EventosApiController).
+ * Implementado em vanilla JS porque o ecra de detalhes vem do bundle React
+ * minificado; este bloco injeta a UI no DOM sem mexer no React.
+ * Nota: a estrela usa o escape ★ (ASCII puro) para evitar problemas
+ * de codificacao do ficheiro.
+ * ======================================================================== */
+;(function () {
+  "use strict";
+
+  var STAR = "★"; // estrela cheia
+  var CONTAINER_ID = "eh-avaliacoes";
+  var BACK_LABEL = "Voltar para eventos";
+  var currentEventId = null;
+
+  // fetch original (antes do nosso wrapper) para os nossos proprios pedidos.
+  var origFetch = window.fetch.bind(window);
+
+  // 1) Descobrir qual o evento aberto, interceptando o fetch dos bilhetes
+  //    que o ecra de detalhes faz sempre ao montar.
+  window.fetch = function (input, init) {
+    var url = typeof input === "string" ? input : (input && input.url) || "";
+    var result = origFetch(input, init);
+    var match = /\/api\/eventos\/(\d+)\/bilhetes/.exec(url);
+    if (match) {
+      currentEventId = parseInt(match[1], 10);
+      setTimeout(scheduleInject, 60);
+    }
+    return result;
+  };
+
+  function findBackButton() {
+    var root = document.getElementById("root") || document.body;
+    var nodes = root.querySelectorAll("button, a");
+    for (var i = 0; i < nodes.length; i++) {
+      if ((nodes[i].textContent || "").trim().indexOf(BACK_LABEL) !== -1) {
+        return nodes[i];
+      }
+    }
+    return null;
+  }
+
+  var injectScheduled = false;
+  function scheduleInject() {
+    if (injectScheduled) return;
+    injectScheduled = true;
+    (window.requestAnimationFrame || window.setTimeout)(function () {
+      injectScheduled = false;
+      injectIfNeeded();
+    });
+  }
+
+  function injectIfNeeded() {
+    if (currentEventId == null) return;
+    var back = findBackButton();
+    if (!back) return; // nao estamos no ecra de detalhes
+    var card = back.closest("section") || back.parentNode;
+    if (!card || !card.parentNode) return;
+
+    var existing = document.getElementById(CONTAINER_ID);
+    if (existing && existing.getAttribute("data-event-id") === String(currentEventId)) {
+      return; // ja injetado para este evento
+    }
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+    ensureStyles();
+
+    var section = document.createElement("section");
+    section.id = CONTAINER_ID;
+    section.setAttribute("data-event-id", String(currentEventId));
+    section.className = "eh-avaliacoes";
+    section.innerHTML =
+      '<div class="eh-av-inner">' +
+        '<h2 class="eh-av-title">Avaliacoes</h2>' +
+        '<div class="eh-av-body"><div class="eh-av-empty">A carregar avaliacoes...</div></div>' +
+      '</div>';
+
+    card.parentNode.insertBefore(section, card.nextSibling);
+    loadAvaliacoes(currentEventId, section);
+  }
+
+  function loadAvaliacoes(eventId, section) {
+    origFetch("/api/eventos/" + eventId + "/avaliacoes", { credentials: "include" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (section.getAttribute("data-event-id") !== String(eventId)) return;
+        if (!data) { renderError(section); return; }
+        renderAvaliacoes(section, eventId, data);
+      })
+      .catch(function () { renderError(section); });
+  }
+
+  function renderError(section) {
+    var body = section.querySelector(".eh-av-body");
+    if (body) body.innerHTML = '<div class="eh-av-empty">Nao foi possivel carregar as avaliacoes.</div>';
+  }
+
+  function starsRow(value, large) {
+    var full = Math.round(value || 0);
+    var html = '<span class="eh-av-stars' + (large ? " eh-av-stars-lg" : "") + '">';
+    for (var i = 1; i <= 5; i++) {
+      html += '<span class="' + (i <= full ? "eh-av-star-on" : "eh-av-star-off") + '">' + STAR + "</span>";
+    }
+    return html + "</span>";
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function renderAvaliacoes(section, eventId, data) {
+    var media = typeof data.media === "number" ? data.media : 0;
+    var total = data.total || 0;
+    var list = Array.isArray(data.avaliacoes) ? data.avaliacoes : [];
+
+    var html = "";
+    html += '<div class="eh-av-summary">';
+    html += '<div class="eh-av-average">' + media.toFixed(1) + "<small>/5</small></div>";
+    html += '<div class="eh-av-summary-meta">' + starsRow(media, true);
+    html += '<span class="eh-av-count">' + total + " " + (total === 1 ? "avaliacao" : "avaliacoes") + "</span>";
+    html += "</div></div>";
+
+    html += '<div class="eh-av-list">';
+    if (!list.length) {
+      html += '<div class="eh-av-empty">Este evento ainda nao tem avaliacoes. Se ja participaste, deixa a primeira!</div>';
+    } else {
+      for (var i = 0; i < list.length; i++) {
+        var f = list[i];
+        html += '<article class="eh-av-card">';
+        html += '<div class="eh-av-card-head">';
+        html += '<span class="eh-av-author">' + escapeHtml(f.autor) + "</span>";
+        html += starsRow(f.classificacao, false);
+        html += "</div>";
+        html += '<p class="eh-av-text">' + escapeHtml(f.descricao) + "</p>";
+        html += "</article>";
+      }
+    }
+    html += "</div>";
+
+    if (data.jaInscrito) {
+      html += '<form class="eh-av-form" novalidate>';
+      html += "<h3>Deixa a tua avaliacao</h3>";
+      html += '<div class="eh-av-rating" role="radiogroup" aria-label="Classificacao em estrelas">';
+      for (var v = 1; v <= 5; v++) {
+        html += '<button type="button" class="eh-av-rating-star" data-value="' + v +
+          '" aria-label="' + v + " estrela" + (v === 1 ? "" : "s") + '">' + STAR + "</button>";
+      }
+      html += "</div>";
+      html += '<textarea class="eh-av-textarea" maxlength="500" placeholder="Conta como foi a tua experiencia neste evento..."></textarea>';
+      html += '<div class="eh-av-msg" hidden></div>';
+      html += '<button type="submit" class="eh-av-submit">Submeter avaliacao</button>';
+      html += "</form>";
+    } else if (data.autenticado) {
+      html += '<p class="eh-av-locked">So podes avaliar este evento se estiveres inscrito.</p>';
+    } else {
+      html += '<p class="eh-av-locked">Inicia sessao e inscreve-te no evento para poderes avaliar.</p>';
+    }
+
+    var body = section.querySelector(".eh-av-body");
+    body.innerHTML = html;
+    if (data.jaInscrito) wireForm(eventId, section, body);
+  }
+
+  function wireForm(eventId, section, body) {
+    var selected = 0;
+    var stars = body.querySelectorAll(".eh-av-rating-star");
+
+    function paint(n) {
+      for (var i = 0; i < stars.length; i++) {
+        var val = parseInt(stars[i].getAttribute("data-value"), 10);
+        stars[i].classList.toggle("is-on", val <= n);
+      }
+    }
+
+    for (var i = 0; i < stars.length; i++) {
+      (function (star) {
+        var val = parseInt(star.getAttribute("data-value"), 10);
+        star.addEventListener("mouseenter", function () { paint(val); });
+        star.addEventListener("click", function () { selected = val; paint(val); });
+      })(stars[i]);
+    }
+
+    var rating = body.querySelector(".eh-av-rating");
+    rating.addEventListener("mouseleave", function () { paint(selected); });
+
+    var form = body.querySelector(".eh-av-form");
+    var textarea = body.querySelector(".eh-av-textarea");
+    var msg = body.querySelector(".eh-av-msg");
+    var submit = body.querySelector(".eh-av-submit");
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      msg.hidden = true;
+      if (!selected) { showMsg(msg, "Escolhe uma classificacao de 1 a 5 estrelas."); return; }
+      var texto = (textarea.value || "").trim();
+      if (!texto) { showMsg(msg, "Escreve um comentario sobre o evento."); return; }
+
+      submit.disabled = true;
+      submit.textContent = "A submeter...";
+      origFetch("/api/eventos/" + eventId + "/avaliacoes", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ classificacao: selected, descricao: texto })
+      })
+        .then(function (r) {
+          return r.json().catch(function () { return null; }).then(function (b) {
+            return { ok: r.ok, body: b };
+          });
+        })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && res.body.message) || "Nao foi possivel submeter a avaliacao.");
+          loadAvaliacoes(eventId, section); // recarrega lista + media
+        })
+        .catch(function (err) {
+          submit.disabled = false;
+          submit.textContent = "Submeter avaliacao";
+          showMsg(msg, err.message);
+        });
+    });
+  }
+
+  function showMsg(el, text) {
+    el.textContent = text;
+    el.hidden = false;
+  }
+
+  function ensureStyles() {
+    if (document.getElementById("eh-avaliacoes-styles")) return;
+    var css = "" +
+      ".eh-avaliacoes{max-width:1600px;margin:1.5rem auto 4rem;padding:0 clamp(1rem,4vw,2.5rem);box-sizing:border-box;color:#fff;}" +
+      ".eh-av-inner{background:rgba(10,10,10,.68);border:1px solid rgba(255,255,255,.11);border-radius:30px;padding:clamp(1.5rem,4vw,3rem);backdrop-filter:blur(18px);}" +
+      ".eh-av-title{font-size:clamp(1.45rem,3vw,2.15rem);line-height:1;text-transform:uppercase;font-weight:900;margin:0 0 1.25rem;}" +
+      ".eh-av-summary{display:flex;align-items:center;gap:1.75rem;flex-wrap:wrap;margin:0 0 2.25rem;}" +
+      ".eh-av-average{font-size:clamp(2.6rem,7vw,3.8rem);font-weight:900;line-height:1;color:#facc15;}" +
+      ".eh-av-average small{font-size:1.05rem;color:rgba(255,255,255,.5);font-weight:700;}" +
+      ".eh-av-summary-meta{display:flex;flex-direction:column;gap:.4rem;}" +
+      ".eh-av-stars{display:inline-flex;gap:.15rem;font-size:1.1rem;line-height:1;}" +
+      ".eh-av-stars-lg{font-size:1.4rem;}" +
+      ".eh-av-star-on{color:#facc15;}" +
+      ".eh-av-star-off{color:rgba(255,255,255,.25);}" +
+      ".eh-av-count{color:rgba(255,255,255,.55);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.74rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;}" +
+      ".eh-av-list{display:grid;gap:1rem;margin-bottom:2.25rem;}" +
+      ".eh-av-card{border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);padding:1.2rem 1.35rem;}" +
+      ".eh-av-card-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem;}" +
+      ".eh-av-author{font-weight:800;text-transform:uppercase;letter-spacing:.04em;font-size:.92rem;}" +
+      ".eh-av-text{margin:0;color:rgba(255,255,255,.74);font-size:.92rem;overflow-wrap:anywhere;}" +
+      ".eh-av-empty{padding:2.25rem 1rem;text-align:center;color:rgba(255,255,255,.42);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.8rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;}" +
+      ".eh-av-form{border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.025);padding:1.5rem;}" +
+      ".eh-av-form h3{font-size:1.1rem;font-weight:900;text-transform:uppercase;margin:0 0 1rem;}" +
+      ".eh-av-rating{display:inline-flex;gap:.2rem;margin-bottom:1rem;}" +
+      ".eh-av-rating-star{background:none;border:none;padding:0 .05rem;font-size:1.9rem;line-height:1;color:rgba(255,255,255,.25);cursor:pointer;transition:color .12s ease,transform .12s ease;}" +
+      ".eh-av-rating-star:hover{transform:scale(1.12);}" +
+      ".eh-av-rating-star.is-on{color:#facc15;}" +
+      ".eh-av-textarea{width:100%;min-height:6rem;resize:vertical;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.25);color:#fff;padding:.9rem 1rem;font-size:.92rem;box-sizing:border-box;}" +
+      ".eh-av-textarea:focus{outline:none;border-color:#facc15;background:rgba(0,0,0,.35);}" +
+      ".eh-av-msg{margin-top:.75rem;color:#fca5a5;font-size:.85rem;}" +
+      ".eh-av-submit{margin-top:1rem;border-radius:999px;border:1px solid #facc15;background:#facc15;color:#050505;padding:.7rem 1.6rem;font-size:.74rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:transform .2s ease,background .2s ease;}" +
+      ".eh-av-submit:hover{transform:scale(1.04);background:#fde047;}" +
+      ".eh-av-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}" +
+      ".eh-av-locked{color:rgba(255,255,255,.5);font-size:.9rem;font-style:italic;margin:0;}";
+    var style = document.createElement("style");
+    style.id = "eh-avaliacoes-styles";
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function init() {
+    var root = document.getElementById("root");
+    if (!root) { setTimeout(init, 100); return; }
+    var observer = new MutationObserver(function () { scheduleInject(); });
+    observer.observe(root, { childList: true, subtree: true });
+    scheduleInject();
+  }
+
+  init();
+})();

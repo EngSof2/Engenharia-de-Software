@@ -2,6 +2,7 @@ using System.Data;
 using ES2.Data;
 using ES2.DTOs;
 using ES2.Models;
+using ES2.Repositories.Interfaces;
 using ES2.Services.Inscricoes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,18 @@ public class EventoController : Controller
     private readonly AppDbContext _context;
     private readonly IInscricaoEventoService _inscricaoEventoService;
     private readonly IConfiguradorBilhetesService _configuradorBilhetesService;
+    private readonly IFeedbackEvntRepository _feedbackEvntRepository;
 
     public EventoController(
         AppDbContext context,
         IInscricaoEventoService inscricaoEventoService,
-        IConfiguradorBilhetesService configuradorBilhetesService)
+        IConfiguradorBilhetesService configuradorBilhetesService,
+        IFeedbackEvntRepository feedbackEvntRepository)
     {
         _context = context;
         _inscricaoEventoService = inscricaoEventoService;
         _configuradorBilhetesService = configuradorBilhetesService;
+        _feedbackEvntRepository = feedbackEvntRepository;
     }
 
     [HttpGet]
@@ -295,15 +299,70 @@ public class EventoController : Controller
         if (evento == null)
             return NotFound();
 
+        var feedbacks = await _feedbackEvntRepository.GetByEventoComUtilizadorAsync(evento.IdEvento);
+
         var dto = new EventoDetalhesCompraDto
         {
             Evento = evento,
             OfertasBilhete = await _configuradorBilhetesService.GarantirEObterOfertasAsync(evento.IdEvento),
             JaInscrito = (await _inscricaoEventoService.ObterEventosInscritosAsync(User.Identity?.Name)).Contains(evento.IdEvento),
-            IdBilheteAtivo = await _inscricaoEventoService.ObterBilheteAtivoDoEventoAsync(evento.IdEvento, User.Identity?.Name)
+            IdBilheteAtivo = await _inscricaoEventoService.ObterBilheteAtivoDoEventoAsync(evento.IdEvento, User.Identity?.Name),
+            Feedbacks = feedbacks,
+            MediaClassificacao = feedbacks.Count > 0 ? Math.Round(feedbacks.Average(f => f.Classificacao), 1) : 0
         };
 
         return View(dto);
+    }
+
+    // Qualquer utilizador inscrito no evento pode deixar uma avaliacao (estrelas + comentario).
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdicionarFeedback(int id, int classificacao, string? descricao)
+    {
+        var existeEvento = await _context.Eventos.AnyAsync(e => e.IdEvento == id);
+        if (!existeEvento)
+            return NotFound();
+
+        var utilizador = await _context.Utilizadores
+            .FirstOrDefaultAsync(u => u.Nome == User.Identity!.Name);
+
+        if (utilizador == null)
+        {
+            TempData["Erro"] = "Nao foi possivel identificar o utilizador autenticado.";
+            return RedirectToAction(nameof(Detalhes), new { id });
+        }
+
+        var inscrito = (await _inscricaoEventoService.ObterEventosInscritosAsync(User.Identity?.Name)).Contains(id);
+        if (!inscrito)
+        {
+            TempData["Erro"] = "So podes avaliar eventos em que estas inscrito.";
+            return RedirectToAction(nameof(Detalhes), new { id });
+        }
+
+        if (classificacao is < 1 or > 5)
+        {
+            TempData["Erro"] = "A classificacao tem de ser entre 1 e 5 estrelas.";
+            return RedirectToAction(nameof(Detalhes), new { id });
+        }
+
+        descricao = descricao?.Trim();
+        if (string.IsNullOrWhiteSpace(descricao))
+        {
+            TempData["Erro"] = "O comentario nao pode estar vazio.";
+            return RedirectToAction(nameof(Detalhes), new { id });
+        }
+
+        await _feedbackEvntRepository.AddAsync(new FeedbackEvnt
+        {
+            IdEvento = id,
+            IdUti = utilizador.IdUti,
+            Classificacao = classificacao,
+            Descricao = descricao
+        });
+
+        TempData["Sucesso"] = "Avaliacao submetida com sucesso. Obrigado pelo teu feedback!";
+        return RedirectToAction(nameof(Detalhes), new { id });
     }
 
     // Só Admin e Organizador podem gerir eventos

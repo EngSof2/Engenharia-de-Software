@@ -247,6 +247,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("ID_FBEvnt");
             entity.Property(e => e.IdEvento).HasColumnName("ID_Evento");
             entity.Property(e => e.IdUti).HasColumnName("ID_Uti");
+            entity.Property(e => e.Classificacao).HasColumnName("Classificacao");
 
             entity.HasOne(d => d.IdEventoNavigation).WithMany(p => p.FeedbackEvnts)
                 .HasForeignKey(d => d.IdEvento)
