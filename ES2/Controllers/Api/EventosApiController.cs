@@ -640,11 +640,42 @@ public class EventosApiController : ControllerBase
         if (quantidadeStandard + quantidadeGold + quantidadeVip <= 0)
             return BadRequest("Deves disponibilizar pelo menos um bilhete.");
 
+        var novaCategoria = req.NovaCategoria?.Trim();
+        if (!string.IsNullOrWhiteSpace(novaCategoria) && novaCategoria.Length > 40)
+            return BadRequest("O nome da categoria nao pode ter mais de 40 caracteres.");
+
         var nomeUtilizador = User.Identity?.Name;
         var organizador = string.IsNullOrWhiteSpace(nomeUtilizador)
             ? null
             : await _context.Utilizadores
                 .FirstOrDefaultAsync(u => u.Nome == nomeUtilizador, ct);
+
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
+
+        int? idCategoria = req.IdCategoria;
+        Categoria? categoriaCriada = null;
+        if (!string.IsNullOrWhiteSpace(novaCategoria))
+        {
+            categoriaCriada = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.Nome.ToLower() == novaCategoria.ToLower(), ct);
+
+            if (categoriaCriada == null)
+            {
+                categoriaCriada = new Categoria { Nome = novaCategoria };
+                _context.Categorias.Add(categoriaCriada);
+                await _context.SaveChangesAsync(ct);
+            }
+
+            idCategoria = categoriaCriada.IdCategoria;
+        }
+        else if (idCategoria.HasValue)
+        {
+            categoriaCriada = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.IdCategoria == idCategoria.Value, ct);
+
+            if (categoriaCriada == null)
+                return BadRequest("Categoria invalida.");
+        }
 
         var evento = new Evento
         {
@@ -654,15 +685,24 @@ public class EventosApiController : ControllerBase
             Local = req.Local.Trim(),
             Descricao = req.Descricao.Trim(),
             CapMax = req.Capacidade,
-            IdCategoria = req.IdCategoria,
+            IdCategoria = idCategoria,
             IdOrganizador = organizador?.IdUti
         };
 
-        await using var tx = await _context.Database.BeginTransactionAsync(ct);
         try
         {
             _context.Eventos.Add(evento);
             await _context.SaveChangesAsync(ct);
+
+            if (idCategoria.HasValue)
+            {
+                _context.CategoriaEventos.Add(new CategoriaEvento
+                {
+                    IdEvento = evento.IdEvento,
+                    IdCategoria = idCategoria.Value
+                });
+                await _context.SaveChangesAsync(ct);
+            }
 
             // Bilhete base que depois e expandido para Standard/Gold/VIP.
             var bilheteBase = new Bilhete { Nome = "Entrada Normal" };

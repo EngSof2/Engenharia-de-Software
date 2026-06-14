@@ -68,8 +68,12 @@ public class UtilizadoresApiController : ControllerBase
 
         var adminIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var isOwnAccount = adminIdStr == id.ToString();
+        var tipoPedido = PerfilParaTipo(request.Perfil, request.TipoUti);
+        if (isOwnAccount && tipoPedido != utilizador.TipoUti)
+            return BadRequest(new { message = "Nao pode alterar o cargo da sua propria conta." });
+
         if (!isOwnAccount)
-            utilizador.TipoUti = PerfilParaTipo(request.Perfil, request.TipoUti);
+            utilizador.TipoUti = tipoPedido;
 
         await _utilizadorRepository.UpdateAsync(utilizador);
 
