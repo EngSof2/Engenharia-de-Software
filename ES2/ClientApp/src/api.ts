@@ -29,6 +29,44 @@ export type Purchase = {
   valor: number;
 };
 
+export type PaymentMethod = {
+  idTipoPagamento: number;
+  nome: string;
+};
+
+export type CheckoutData = {
+  idBilheteEvento: number;
+  idEvento: number;
+  nomeEvento: string;
+  dataEvento: string | null;
+  horaEvento: string | null;
+  localEvento: string | null;
+  nomeBilhete: string;
+  tipoBilhete: string;
+  descricaoAcesso: string;
+  preco: number;
+  quantidadeDisponivel: number;
+  nomeComprador: string;
+  email: string;
+  telemovel: string;
+  morada: string;
+  tiposPagamento: PaymentMethod[];
+};
+
+export type CheckoutPayload = {
+  idBilheteEvento: number;
+  nomeComprador: string;
+  email: string;
+  telemovel: string;
+  morada: string;
+  idTipoPagamento: number;
+  numeroCartao?: string;
+  nomeTitular?: string;
+  validadeCartao?: string;
+  cvv?: string;
+  emailPaypal?: string;
+};
+
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     credentials: "include",
@@ -62,6 +100,14 @@ export const api = {
   getUsers: () => request<UserRow[]>("/api/utilizadores"),
 
   getPurchaseHistory: () => request<Purchase[]>("/api/bilhetes/historico"),
+
+  getCheckout: (id: number) => request<CheckoutData>(`/api/bilhetes/checkout/${id}`),
+
+  purchaseTicket: (payload: CheckoutPayload) =>
+    request<{ message: string }>("/api/bilhetes/checkout", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
 
   deleteEvent: (id: number) =>
     request(`/api/eventos/${id}`, {

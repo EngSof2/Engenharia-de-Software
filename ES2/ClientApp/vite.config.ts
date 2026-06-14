@@ -10,14 +10,28 @@ export default defineConfig(({mode}) => {
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
+    base: '/event-horizon/',
+    build: {
+      outDir: path.resolve(__dirname, '../wwwroot/event-horizon'),
+      emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/event-horizon.js',
+          chunkFileNames: 'assets/chunk-[name].js',
+          assetFileNames: (assetInfo) => {
+            const name = assetInfo.name ?? '';
+            if (name.endsWith('.css')) return 'assets/event-horizon.css';
+            return 'assets/[name][extname]';
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };

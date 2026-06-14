@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace ES2.DTOs;
 
 public class CheckoutBilheteDto
@@ -26,23 +24,25 @@ public class CheckoutBilheteDto
 
     public int QuantidadeDisponivel { get; set; }
 
-    [Required(ErrorMessage = "O nome e obrigatorio.")]
     public string NomeComprador { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "O email e obrigatorio.")]
-    [EmailAddress(ErrorMessage = "Indica um email valido.")]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "O telemovel e obrigatorio.")]
-    [RegularExpression(@"^\d{9}$", ErrorMessage = "O telemovel deve ter 9 digitos.")]
     public string Telemovel { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "A morada e obrigatoria.")]
-    [StringLength(150, ErrorMessage = "A morada nao pode ter mais de 150 caracteres.")]
     public string Morada { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Escolhe um metodo de pagamento.")]
     public int? IdTipoPagamento { get; set; }
+
+    public string? NumeroCartao { get; set; }
+
+    public string? NomeTitular { get; set; }
+
+    public string? ValidadeCartao { get; set; }
+
+    public string? Cvv { get; set; }
+
+    public string? EmailPaypal { get; set; }
 
     public IReadOnlyCollection<OpcaoPagamentoDto> TiposPagamento { get; set; } = Array.Empty<OpcaoPagamentoDto>();
 }

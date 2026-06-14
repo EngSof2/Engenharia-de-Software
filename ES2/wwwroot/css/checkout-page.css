@@ -1,0 +1,123 @@
+#eh-checkout-mount {
+  width: 100%;
+}
+
+.eh-checkout-main {
+  position: relative;
+  width: 100%;
+  padding: 5.5rem 1.5rem 2.5rem;
+  color: #fff;
+  background: #333533;
+}
+
+.eh-checkout-main::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(250, 204, 21, 0.08), transparent 35%);
+  pointer-events: none;
+}
+
+.eh-checkout-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.eh-checkout-panel {
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 10, 0.72);
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px);
+}
+
+.eh-checkout-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.eh-checkout-input,
+.eh-checkout-select {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1rem 1.25rem;
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  color: #fff;
+  outline: none;
+}
+
+.eh-checkout-input:focus,
+.eh-checkout-select:focus {
+  border-color: #facc15;
+}
+
+.eh-checkout-field {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+.eh-checkout-payment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.eh-checkout-payment-grid .eh-checkout-field--full {
+  grid-column: 1 / -1;
+}
+
+.eh-checkout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.eh-checkout-btn-primary,
+.eh-checkout-btn-secondary {
+  border-radius: 9999px;
+  padding: 1rem 2.25rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.eh-checkout-btn-primary {
+  border: none;
+  background: #facc15;
+  color: #000;
+}
+
+.eh-checkout-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.eh-checkout-btn-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+@media (max-width: 1100px) {
+  .eh-checkout-layout {
+    grid-template-columns: 1fr;
+  }
+}

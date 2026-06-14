@@ -59,17 +59,9 @@ public class BilheteController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Checkout(int id)
+    public IActionResult Checkout(int id)
     {
-        var nomeUtilizador = User.FindFirstValue(ClaimTypes.Name);
-        if (string.IsNullOrWhiteSpace(nomeUtilizador))
-            return RedirectToAction("Index", "Login");
-
-        var dto = await _inscricaoEventoService.ObterCheckoutAsync(id, nomeUtilizador);
-        if (dto == null)
-            return NotFound();
-
-        return View(dto);
+        return Redirect($"/Home/Index?page=checkout&ticketId={id}");
     }
 
     [HttpPost]
@@ -80,12 +72,19 @@ public class BilheteController : Controller
         if (string.IsNullOrWhiteSpace(nomeUtilizador))
             return RedirectToAction("Index", "Login");
 
+        var checkout = await _inscricaoEventoService.ObterCheckoutAsync(dto.IdBilheteEvento, nomeUtilizador);
+        if (checkout == null)
+            return NotFound();
+
+        dto.TiposPagamento = checkout.TiposPagamento;
+        var metodo = checkout.TiposPagamento
+            .FirstOrDefault(tp => tp.IdTipoPagamento == dto.IdTipoPagamento)?.Nome;
+
+        foreach (var erro in ValidadorCheckoutPagamento.Validar(dto, metodo))
+            ModelState.AddModelError(string.Empty, erro);
+
         if (!ModelState.IsValid)
         {
-            var checkout = await _inscricaoEventoService.ObterCheckoutAsync(dto.IdBilheteEvento, nomeUtilizador);
-            if (checkout == null)
-                return NotFound();
-
             dto.NomeEvento = checkout.NomeEvento;
             dto.DataEvento = checkout.DataEvento;
             dto.HoraEvento = checkout.HoraEvento;
@@ -95,7 +94,6 @@ public class BilheteController : Controller
             dto.DescricaoAcesso = checkout.DescricaoAcesso;
             dto.Preco = checkout.Preco;
             dto.QuantidadeDisponivel = checkout.QuantidadeDisponivel;
-            dto.TiposPagamento = checkout.TiposPagamento;
 
             return View(dto);
         }
@@ -105,10 +103,15 @@ public class BilheteController : Controller
 
         if (!resultado.Sucesso)
         {
-            var checkout = await _inscricaoEventoService.ObterCheckoutAsync(dto.IdBilheteEvento, nomeUtilizador);
-            if (checkout != null)
-                dto.TiposPagamento = checkout.TiposPagamento;
-
+            dto.NomeEvento = checkout.NomeEvento;
+            dto.DataEvento = checkout.DataEvento;
+            dto.HoraEvento = checkout.HoraEvento;
+            dto.LocalEvento = checkout.LocalEvento;
+            dto.NomeBilhete = checkout.NomeBilhete;
+            dto.TipoBilhete = checkout.TipoBilhete;
+            dto.DescricaoAcesso = checkout.DescricaoAcesso;
+            dto.Preco = checkout.Preco;
+            dto.QuantidadeDisponivel = checkout.QuantidadeDisponivel;
             return View(dto);
         }
 

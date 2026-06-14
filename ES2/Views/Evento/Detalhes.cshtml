@@ -934,7 +934,7 @@
                                         }
                                         else
                                         {
-                                            <a asp-controller="Bilhete" asp-action="Checkout" asp-route-id="@oferta.IdBilheteEvento" class="@botaoCompraClass">
+                                            <a href="/?page=checkout&ticketId=@oferta.IdBilheteEvento" class="@botaoCompraClass">
                                                 Comprar
                                             </a>
                                         }

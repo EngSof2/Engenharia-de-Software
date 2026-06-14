@@ -13,13 +13,18 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/mensagens-widget.css" asp-append-version="true" />
     <script>
-        const initialPage = new URLSearchParams(window.location.search).get("page")?.toLowerCase();
-        const spaPages = new Set(["events", "subscribed_events", "created_events", "create_event", "event_details", "login", "register", "users", "edit_user", "profile", "edit_profile", "purchase_history"]);
+        const initialParams = new URLSearchParams(window.location.search);
+        const initialPage = initialParams.get("page")?.toLowerCase();
+        const initialTicketId = Number(initialParams.get("ticketId") || 0);
+        const spaPages = new Set(["events", "subscribed_events", "created_events", "create_event", "event_details", "checkout", "login", "register", "users", "edit_user", "profile", "edit_profile", "purchase_history"]);
         window.__EH_INITIAL_PAGE__ = spaPages.has(initialPage) ? initialPage : "home";
+        window.__EH_INITIAL_TICKET_ID__ = initialTicketId > 0 ? initialTicketId : null;
     </script>
     <script type="module" crossorigin src="/event-horizon/assets/event-horizon.js"></script>
     <link rel="stylesheet" crossorigin href="/event-horizon/assets/event-horizon.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/checkout-page.css" asp-append-version="true" />
+    <script src="~/js/checkout-page.js" asp-append-version="true"></script>
 </head>
 <body>
 <div id="root"></div>

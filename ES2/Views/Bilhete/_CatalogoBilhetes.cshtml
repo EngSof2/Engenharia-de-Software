@@ -42,7 +42,7 @@
                         }
                         else
                         {
-                            <a asp-action="Checkout" asp-route-id="@bilhete.IdBiEv" class="btn btn-sm btn-success mt-3 @(bilhete.QuantidadeDisponivel <= 0 ? "disabled" : "")">
+                            <a href="/?page=checkout&ticketId=@bilhete.IdBiEv" class="btn btn-sm btn-success mt-3 @(bilhete.QuantidadeDisponivel <= 0 ? "disabled" : "")">
                                 <i class="bi bi-credit-card"></i> Comprar
                             </a>
                         }
