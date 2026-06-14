@@ -17,6 +17,9 @@ public class RelatoriosController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        ViewData["HideChrome"] = true;
+        ViewData["HideFooter"] = true;
+
         var dto = await _relatorioService.ObterRelatorioAdminAsync();
         return View(dto);
     }
